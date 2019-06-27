@@ -1,0 +1,445 @@
+﻿<table style="width: 100%">
+    <tr>
+        <td style="text-align: center;"><b>Loading - Hatch Material Loading</b></td>
+    </tr>
+
+    <tr>
+        <td>Hatch Barcode: <input type="text" id="txtHatchBarcode" style="width:190px;" class="inputlayout" /></td>
+    </tr>
+
+    <tr>
+        <td>Hatch ID: <input type="text" id="txtHatchId" style="width:50px;" class="inputlayout" /></td>
+    </tr>
+
+    <tr>
+        <td>Hatch No: <label id="lblHatchNo"></label></td>
+    </tr>
+
+    <tr>
+        <td style="padding-top:10px;">Material Barcode: <input type="text" id="txtMaterialBarcode" class="inputlayout" style="width:190px;" /></td>
+    </tr>
+
+    <tr>
+        <td>Material ID: <input type="text" style="width:50px;" class="inputlayout" id="txtMaterialId" /> Qty: <input type="text" id="txtQty" style="width:40px" class="inputlayout" /></td>
+    </tr>
+
+    <tr>
+        <td>Material Name: <label id="lblMaterialName"></label></td>
+    </tr>
+
+    <tr>
+        <td>Remarks: <input type="text" class="inputlayout" style="width:100px;" id="txtRemarks" /></td>
+    </tr>
+
+    <tr>
+        <td>
+            <input type="hidden" id="txtShipmentID" value=@TempData["shipmentid"] />
+            <input type="hidden" id="txtPortID" value=@TempData["portid"] />
+            <input type="hidden" id="txtVesselID" value=@TempData["vesselid"] />
+        </td>
+    </tr>   
+
+    <tr>
+        <td>
+            <b> Press Alt+: 1-Save, 2-Clear Entry, 
+            <br /> 3-Back to Loading Menu,
+            <br /> 4-Logout
+            <br /> 5-Unload 
+            </b>
+        </td>
+    </tr>
+
+
+</table>
+
+<script type="text/javascript">
+
+    $(document).ready(function() {
+
+        var baseUrl = getbaseUrl();
+        var BID_HATCH_DECK = 5;
+        var BID_MATERIALS = 7;
+
+        $("#txtHatchBarcode").focus();
+
+        $("html").bind("keydown",function(e){
+            
+            //Start alt + 1 Save
+            if (e.altKey == true && e.keyCode == 49) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+
+                        } else {
+                            
+                            var shipmentid = $.trim($("#txtShipmentID").val());
+                            var portid = $.trim($("#txtPortID").val());
+                            var vesselid = $.trim($("#txtVesselID").val());
+                            var hatchid = $.trim($("#txtHatchId").val());
+                            var materialid = $.trim($("#txtMaterialId").val());
+                            var qty = $.trim($("#txtQty").val());
+                            var remarks = $("#txtRemarks").val();
+
+                            if (hatchid.length > 0 && materialid.length > 0) {
+
+                                if (qty.length > 0 && qty > 0) {
+                                                        
+                                    $.ajax({
+                                        type: "POST",
+                                        url: baseUrl + "loading/InsertLoadingMaterials",
+                                        data: {
+                                            materialid: materialid,
+                                            shipmentid: shipmentid,
+                                            portid: portid,
+                                            inreefervan: "N",
+                                            hatchholdid: hatchid,
+                                            reefervan: 0,
+                                            quantity: qty,
+                                            remarks: remarks 
+                                        },
+                                        success: function(response,status) {
+                                            if (response == "-1") {
+                                                alert("Error Occured!");
+                                                return;
+                                            }else if (response == "-2") {
+                                                alert("Material already loaded");
+                                                return;
+                                            }else if (response == "-3") {
+                                                alert("Invalid Hatch");
+                                                return;
+                                            }else if (response == "-10") {
+                                                alert("Database Error");
+                                                return;
+                                            }else if (response == "0") {
+                                                $("#txtMaterialBarcode, #txtMaterialId, #txtQty, #txtRemarks").val("");
+                                                $("#lblMaterialName").html("");
+                                                alert("Material Loaded Succesfully");
+                                                $("#txtMaterialBarcode").focus();
+                                            }else {
+                                                alert("Database Error!");
+                                                return
+                                            }
+
+                                        }
+                                    })
+                                    
+                                }else {
+                                    alert("Invalid Box Qty Value");
+                                    return;
+                                }
+
+                            }else {
+                                alert("Invalid Entry");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+            }//end alt + 1 Save
+
+            //Start alt + 2 Clear Entry
+            if (e.altKey == true && e.keyCode == 50) {
+
+                $("#txtMaterialBarcode, #txtMaterialId, #txtQty, #txtRemarks").val("");
+                $("#lblMaterialName").html("");
+                $("#txtMaterialBarcode").focus();
+
+            }//end alt + 2 Cler Entry
+
+            //Start alt + 3 Back to loading menu
+            if (e.altKey == true && e.keyCode == 51) {
+                window.location.href = baseUrl + "loading/LoadMaterials";
+            }//end alt + 3 Back to loading menu
+
+            //Start alt + 4 Logout
+            if (e.altKey == true && e.keyCode == 52) {
+                
+            }//End alt + 4 Logout
+
+            //Start alt + 5 Unload
+            if (e.altKey == true && e.keyCode == 53) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+
+
+                            var shipmentid = $.trim($("#txtShipmentID").val());
+                            var portid = $.trim($("#txtPortID").val());
+                            var vesselid = $.trim($("#txtVesselID").val());
+                            var hatchid = $.trim($("#txtHatchId").val());
+                            var materialid = $.trim($("#txtMaterialId").val());
+                            var remarks = $("#txtRemarks").val();
+
+                            if (hatchid.length > 0 && materialid.length > 0) {
+                                
+                                $.ajax({
+                                    type:"POST",
+                                    url: baseUrl + "loading/UnloadLoadingMaterial",
+                                    data: {
+                                        materialid: materialid,
+                                        shipmentid: shipmentid,
+                                        portid: portid,
+                                        inreefervan: "N",
+                                        hatchid: hatchid,
+                                        reefervanid: 0,
+                                        
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "-1") {
+                                            alert("Error Occured");
+                                            return;
+                                        }else if (response == "-2") {
+                                            alert("Material not found");
+                                            return;
+                                        }else if (response == "-3") {
+                                            alert("Invalid Hatch");
+                                            return;
+                                        }else if (response == "-10") {
+                                            alert("Database Error");
+                                            return;
+                                        }else if (response == "0") {
+                                            alert("Material Unloaded Succesfully");
+                                            $("#txtMaterialBarcode, #txtMaterialId, #txtQty, #txtRemarks").val("");
+                                            $("#lblMaterialName").html("");
+                                            $("#txtMaterialBarcode").focus();
+                                            return;
+                                        }else {
+                                            alert("Database Error");
+                                            return;
+                                        }
+
+                                    }
+                                })
+                            }else {
+                                alert("Error: Invalid Entry");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+            }//End alt + 5 Unload
+
+        })
+
+
+        $("#txtHatchBarcode").bind("keydown", function(e){
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var hatchbarcode = $("#txtHatchBarcode").val();
+                            var prefixhatchbarcode = GetBarcodeType(hatchbarcode);
+
+                            if (prefixhatchbarcode == BID_HATCH_DECK) {
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/DisplayDataHatchHold",
+                                    data: {
+                                        hatchholdbarcode: hatchbarcode
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            alert("Invalid Hatch and Hold ID!");
+
+                                            $("#txtHatchId").val("");
+                                            $("#lblHatchNo").html("");
+
+                                            return;
+                                        }
+                                        var result = JSON.parse(response);
+
+                                        $("#txtHatchId").val(result[0].HatchHoldID);
+                                        $("#lblHatchNo").html(result[0].HatchNo + " " + result[0].DeckNo);
+
+                                        $("#txtMaterialBarcode").focus();
+
+                                    }
+                                })
+
+                            }else {
+                                alert("Barcode Error!");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+
+            }//end alt + enter
+
+        })//end hatch barcode keydown
+
+        $("#txtHatchId").bind("keydown", function(e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var hatchid = $.trim($("#txtHatchId").val());
+
+                            if (hatchid.length > 0) {
+                                
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/DisplayDataHatchHold2",
+                                    data: {
+                                        hatchholdid: hatchid
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            alert("Invalid Hatch and Hold ID!");
+
+                                            $("#txtHatchId").val("");
+                                            $("#lblHatchNo").html("");
+
+                                            return;
+                                        }
+                                        var result = JSON.parse(response);
+
+                                        $("#txtHatchId").val(result[0].HatchHoldID);
+                                        $("#lblHatchNo").html(result[0].HatchNo + " " + result[0].DeckNo);
+
+                                        $("#txtMaterialBarcode").focus();
+
+                                    }
+                                })
+
+                            }else {
+                                alert("Pls. enter a Hatch ID!");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+            }//end alt + enter
+
+        })//end hatchid keydown
+
+        $("#txtMaterialBarcode").bind("keydown", function(e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var materialbarcode = $("#txtMaterialBarcode").val();
+                            var prefixmaterialbarcode = GetBarcodeType(materialbarcode);
+
+                            if (prefixmaterialbarcode == BID_MATERIALS) {
+                                
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/DisplayMaterialsData",
+                                    data: {
+                                        materialbarcode:materialbarcode
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            alert("Invalid Materials ID!");
+                                            $("#txtMaterialId").val("");
+                                            $("#lblMaterialName").html("");
+
+                                            return;
+                                        }
+                                        var result = JSON.parse(response);
+                                        $("#txtMaterialId").val(result[0].MaterialID);
+                                        $("#lblMaterialName").html(result[0].MatName);
+
+                                        $("#txtQty").focus();
+                                    }
+                                })
+
+                            }else {
+                                alert("Barcode Errro!");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+            }//end alt + enter
+
+        })//end material barcode keydown
+
+        $("#txtMaterialId").bind("keydown", function(e) {
+            if (e.altKey == true && e.keyCode == 13) {
+                $("#txtQty").focus();   
+            }
+        })//end materialid bind keydown
+
+        $("#txtQty, #txtRemarks").bind("keydown", function(e) {
+            if (e.altKey == true && e.keyCode == 13) {
+                $("#txtRemarks").focus();
+            }
+        })//end qty,remakrs bind keydown
+
+
+
+    })
+
+    function GetBarcodeType(strBarcode) {
+        var retBarcode;
+
+        if (strBarcode.length == 16 || strBarcode.length == 10) {
+            retBarcode = strBarcode.substring(0,2);
+            retBarcode = Math.round(retBarcode);
+        }else {
+            retBarcode = -1;
+        }
+
+        return retBarcode;
+
+    }
+
+</script>

@@ -1,0 +1,64 @@
+﻿<table style="width:100%;">
+    <tr>
+        <td><b>Cold Storage - Insert Pallet</b></td>
+    </tr>
+    <tr style="width:100%;height:3em;">
+        <td>
+            <button style="width:100%;height:3em;" id="btnBay">Bay</button>
+        </td>
+    </tr>
+    <tr style="width:100%;height:3em;">
+        <td>
+            <button style="width:100%;height:3em;" id="btnReeferVan">Reefer Van</button>
+        </td>
+    </tr>
+    <tr>
+        <td><b>Press: </b></td>
+    </tr>
+
+    <tr>
+        <td><b>1 - Bay</b></td>
+    </tr>
+
+    <tr>
+        <td><b>2 - Reefer Van</b></td>
+    </tr>
+
+    <tr>
+        <td><b>3 - Return</b></td>
+    </tr>
+
+</table>
+
+<script type="text/javascript">
+
+    var baseUrl = getbaseUrl();
+
+    $(document).ready(function () {
+        $('body').focus();
+
+        $('body').bind('keypress', function (e) {
+            if (e.keyCode == 49) {
+                window.location.href = baseUrl + "coldstorage/insertpalletbay";
+            }
+            if (e.keyCode == 50) {
+                window.location.href = baseUrl + "coldstorage/insertpalletreefervan";
+            }
+
+            if (e.keyCode == 51) {
+                window.location.href = baseUrl + "home/coldstorage";
+            }
+
+        })
+
+        $("#btnBay").click(function () {
+            window.location.href = baseUrl + "coldstorage/insertpalletbay";
+        })
+
+        $("#btnReeferVan").click(function () {
+            window.location.href = baseUrl + "coldstorage/insertpalletreefervan";
+        })
+
+
+    })
+</script>

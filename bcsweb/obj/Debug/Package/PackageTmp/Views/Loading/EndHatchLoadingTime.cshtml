@@ -1,0 +1,254 @@
+﻿<table style="width: 100%">
+    <tr>
+        <td style="text-align: center;padding-bottom:5px;"><b>Loading - ELHT</b></td>
+    </tr>   
+
+    <tr>
+        <td>Hatch and Hold Barcode: <input type="text" style="width: 190px;" class="inputlayout" id="txtHatchHoldBarcode" /></td>
+    </tr>
+
+    <tr>
+        <td>Hatch Hold ID: <input type="text" style="width:70px;" class="inputlayout" id="txtHatchHoldID" /></td>
+    </tr>
+
+    <tr>
+        <td>Hatch No: <label id="lblHatchNo"></label></td>
+    </tr>
+
+    <tr>
+        <td>Hold No.: <label id="lblHoldNo"></label></td>
+    </tr>
+
+    <tr>
+        <td>
+            <input type="hidden" id="txtShipmentId" value=@TempData["shipmentid"] />
+        </td>
+    </tr>
+
+    <tr>
+        <td style="padding-top:30px;">
+            <b> Press Alt+: 1-Save, 2-Clear Entry, <br />
+            3-Back to Loading Time Menu,<br />
+            4-Logout</b>
+        </td>
+    </tr>   
+
+</table>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function() {
+
+        var baseUrl = getbaseUrl();
+        var BID_HATCH_DECK = 5;
+
+        $("#txtHatchHoldBarcode").focus();
+
+        $("html").bind("keydown", function(e) {
+
+            //Press alt + 1 save
+            if (e.altKey == true && e.keyCode == 49) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var hatchholdid = $("#txtHatchHoldID").val();
+                            var shipmentid = $("#txtShipmentId").val();
+                            
+                            if (hatchholdid.length > 0) {
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/InsertLoadingHatchEndTime",
+                                    data: {
+                                        hatchholdid: hatchholdid,
+                                        shipmentid: shipmentid
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            alert("Succesfull");
+                                            $("#txtHatchHoldID").val("");
+                                            $("#lblHatchNo").html("");
+                                            return;
+                                        }else if (response == "-2") {
+                                            alert("Hatch Already Closed!");
+                                            return;
+                                        }else if (response == "-3") {
+                                            alert("Hatch Loading Not Yet Started!");
+                                            return;
+                                        }else {
+                                            alert("Database Error!");
+                                            return;
+                                        }   
+                                    }
+                                })
+
+                            }else {
+                                alert("Error: Pls. scan a Hatch ID!");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+            }// end alt + 1 save
+
+            //Press alt + 2 Clear Entry
+            if (e.altKey == true && e.keyCode == 50) {
+                $("#txtHatchHoldBarcode, #txtHatchHoldID").val("");
+                $("#lblHatchNo, #lblHoldNo").html("");
+                $("#txtHatchHoldBarcode").focus();
+            }//end alt + 2 Clear Entry
+
+            //Press alt + 3 Back to loading menu
+            if (e.altKey == true && e.keyCode == 51) {
+                window.location.href = baseUrl + "loading/SetLoadingTime";
+            }//end alt + 3 Back to loading menu
+
+            //Press alt + 4 Logout
+            if (e.altKey == true && e.keyCode == 52) {
+
+            }//end alt + 4 Logout
+
+
+
+        })
+
+
+        $("#txtHatchHoldBarcode").bind("keydown", function(e) {
+            
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var hatchholdbarcode = $.trim($("#txtHatchHoldBarcode").val());
+
+                            if (hatchholdbarcode.length > 0 || hatchholdbarcode > 0) {
+                                    
+                                var prefixhatchholdbarcode = GetBarcodeType(hatchholdbarcode);
+                                if (prefixhatchholdbarcode == BID_HATCH_DECK) {
+                                    
+                                    $.ajax({
+                                        type: "POST",
+                                        url: baseUrl + "loading/DisplayDataHatchHold",
+                                        data: {
+                                            hatchholdbarcode: hatchholdbarcode
+                                        },
+                                        success: function(response,status) {
+                                            if (response == "0") {
+                                                alert("Invalid Hatch and Hold ID!");
+                                                $("#txtHatchHoldID").val("");
+                                                $("#lblHatchNo").html("");  
+                                                return;
+                                            }
+
+                                            var result = JSON.parse(response);
+                                            $("#txtHatchHoldID").val(result[0].HatchHoldID);
+                                            $("#lblHatchNo").html(result[0].HatchNo  + result[0].DeckNo);  
+                                        }
+                                    })
+
+                                }else {
+                                    alert("Barcode Error!");
+                                    $("#txtHatchHoldID").val("");
+                                    $("#lblHatchNo").html("");  
+                                    return;
+                                }
+
+                            }
+
+                        }
+                    }
+                })
+
+
+            }//end alt + enter
+
+        })// end hatchhold barcode bind keydown
+
+        $("#txtHatchHoldID").bind("keydown", function(e) {
+            
+            if (e.altKey == true && e.keyCode == 13) {
+
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var hatchholdid = $("#txtHatchHoldID").val();
+
+                            $.ajax({
+                                type: "POST",
+                                url: baseUrl + "loading/DisplayDataHatchHold2",
+                                data: {
+                                    hatchholdid: hatchholdid
+                                },
+                                success: function(response,status) {
+                                    if (response == "0") {
+                                        alert("Invalid Hatch and Hold ID!");
+                                        $("#txtHatchHoldID").val("");
+                                        $("#lblHatchNo").html("");  
+                                        return;
+                                    }
+
+                                    var result = JSON.parse(response);
+                                    $("#txtHatchHoldID").val(result[0].HatchHoldID);
+                                    $("#lblHatchNo").html(result[0].HatchNo  + result[0].DeckNo);  
+
+                                }
+                            })
+
+                        }
+                    }
+                })
+
+
+            }//end alt + enter
+
+        })//end hatchhold id bind keydown
+
+
+
+    })
+
+
+    function GetBarcodeType(strBarcode) {
+        var retBarcode;
+
+        if (strBarcode.length == 16 || strBarcode.length == 10) {
+
+            retBarcode = strBarcode.substring(0,2);
+            retBarcode = Math.round(retBarcode);
+        
+        }else {
+            retBarcode = -1;
+        }
+
+        return retBarcode;
+
+    }
+
+</script>

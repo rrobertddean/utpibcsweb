@@ -1,0 +1,450 @@
+﻿<form action="" method="POST" id="frmColdStorageIPRV">
+    <table style="width:100%;">
+        <tr>
+            <td style="text-align: center;"><b>CS - IP - Reefer Van</b></td>
+        </tr>
+
+        <tr>
+            <td>Reefer Van Barcode: <input type="text" id="txtReeferVanBC" class="inputlayout" /></td>
+        </tr>
+        <tr>
+            <td>Reefer Van No: <input type="text" id="txtReeferVanNo" class="inputlayout" style="width:100px;"  /></td>
+        </tr>
+        <tr>
+            <td>Content: <label id="lblContent"></label></td>
+        </tr>
+
+        <tr>
+            <td>Barcode: <input type="text" id="txtPalletBarcode" class="inputlayout" style="width:140px;" /></td>
+        </tr>
+
+        <tr>
+            <td>Pallet No: <label id="lblPalletNo" style="display:inline-block;width:80px;"></label> Qty: <label id="lblQty"></label></td>
+        </tr>
+
+        <tr>
+            <td><label id="lblProductSpecCode"></label></td>
+        </tr>
+
+      
+        <tr>
+            <td>Date Packed: <label id="lblDatePacked"></label></td>
+        </tr>  
+        
+        <tr>
+            <td>Port: <input type="text" id="txtPort" class="inputlayout" style="width:70px;" /></td>
+        </tr>   
+
+        <tr>
+            <td>Remarks: <input type="text" id="txtRemarks" class="inputlayout" /></td>
+        </tr>  
+
+        <tr>
+            <td>
+                <input type="hidden" id="txtPalletNoClean" />
+                <input type="hidden" id="txtRVIdClean" />        
+                <input type="hidden" id="txtReeferVanId" />
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+            <b>
+                Press Alt+: 1 - Save, 2 - Clear Entry, 
+                <br />3 - Return to Menu, 4 - Log Out, 
+                <br />5 - Release Pallet
+            </b></td>
+        </tr>
+
+    </table>
+</form>
+
+
+<script type="text/javascript">
+    var baseUrl = getbaseUrl();
+    var BID_REEFER_VAN = 4
+    var BID_PALLET = 1
+
+    $(document).ready(function () {
+
+        checkLoggedin();//check loggedin -function.js
+
+        $('#txtReeferVanBC').focus();
+
+        $('html').bind('keydown', function (e) {
+
+            //Save
+            if (e.altKey == true && e.keyCode == 49) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            var palletno = $.trim($("#txtPalletNoClean").val());
+                            var remarks = $("#txtRemarks").val();
+                            var rvid = $.trim($("#txtRVIdClean").val());
+
+                            if (palletno.length > 0 && rvid.length > 0) {
+
+                                //Insert ReeferVanToColdStorage
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "coldstorage/InsertReeferVanToColdStorage",
+                                    data: {
+                                        palletno: palletno,
+                                        remarks: remarks,
+                                        rvid: rvid
+                                    },
+                                    success: function (response, status) {
+
+
+                                        if (response == "-2") {
+                                            alert("Pallet already inside the CS!");
+                                            return false;
+                                        } else if (response == "-3") {
+                                            alert("Reefer Van Already Full!");
+                                            return false;
+                                        } else if (response == "-4") {
+                                            alert("Pallet is Inactive!");
+                                            return false;
+                                        } else if (response == "0") {
+                                            alert("Succesfull");
+                                            // $("#txtPalletBarcode, #txtPort, #txtRemarks, #txtPalletNoClean").val("");
+                                            // $("#lblPalletNo, #lblQty, #lblDatePacked").html("");
+                                            $("#txtPalletBarcode, #txtPort").val("");
+                                            $("#lblPalletNo, #lblProductSpecCode").html("");
+
+                                            $("#txtPalletBarcode").focus();
+
+                                            $.ajax({
+                                                type: "POST",
+                                                url: baseUrl + "coldstorage/DisplayReeferVanData2",
+                                                data: {
+                                                    reefervanid: rvid
+                                                },
+                                                success: function(response,status) {
+
+                                                    if (response == "0") {
+                                                        alert("Invalid Reefer Van Id!");
+                                                        return;
+                                                    }
+
+                                                    var result = JSON.parse(response);
+                                                    $("#txtRVIdClean").val(result[0].ReeferVanID);
+                                                    $("#txtReeferVanNo").val(result[0].ReeferVanNo);
+                                                    $("#txtReeferVanId").val(result[0].ReeferVanID);
+                                                    $("#lblContent").html(result[0].Content);
+
+                                                    $("#txtPalletBarcode").focus();
+
+
+                                                }
+                                            })
+
+                                        } else {
+                                            alert("Database Error");
+                                            return false;
+                                        }
+
+
+                                    }
+                                })
+
+
+                            } else {
+                                alert("Invalid Entry")
+                            }
+                        }
+                    }
+                })
+             
+
+            }
+
+            //Reset Form
+            if (e.altKey == true && e.keyCode == 50) {
+                $("#lblPalletNo, #lblContent, #lblDatePacked").html("");
+                $("#txtReeferVanNo, #txtReeferVanBC, #txtPalletBarcode").val("");
+
+                $("#txtReeferVanBC").focus();
+            }
+
+            //Return menu
+            if (e.altKey == true && e.keyCode == 51) {
+                window.location.href = baseUrl + "coldstorage/InsertPallet";
+            }
+
+            //Logout
+            if (e.altKey == true && e.keyCode == 52) {
+                window.location.href = baseUrl + "account/Logout";
+            }
+
+            //Release Pallet
+            if (e.altKey == true && e.keyCode == 53) {
+                var palletno = $.trim($("#txtPalletNoClean").val());
+                var remarks = $("#txtRemarks").val();
+                var rvid = $.trim($("#txtRVIdClean").val());
+
+                if (palletno.length == 0 || palletno == "") {
+                    alert("Error: Please Scan a Pallet");
+                    return false;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: baseUrl + "coldstorage/submitReleasePallet",
+                    data: {
+                        palletno: palletno,
+                        remarks: remarks
+                    },
+                    success: function (response, status) {
+                        if (response == "-2") {
+                            alert("Pallet not yet inserted");
+                            return false;
+                        } else if (response == "-1") {
+                            alert("Database Error");
+                            return false;
+                        } else if (response == "0") {
+                            alert("Succesfully Released Pallet");
+
+                            $("#txtReeferVanBC, #txtPalletBarcode").val("");                    
+                            $("#lblPalletNo, #lblContent, #lblDatePacked").html("");
+
+                            if (rvid.length > 0) {
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "coldstorage/DisplayReeferVanData2",
+                                    data: {
+                                        reefervanid: rvid
+                                    },
+                                    success: function(response,status) {
+
+                                        if (response == "0") {
+                                            alert("Invalid Reefer Van Id!");
+                                            return;
+                                        }
+
+                                        var result = JSON.parse(response);
+                                        $("#txtRVIdClean").val(result[0].ReeferVanID);
+                                        $("#txtReeferVanNo").val(result[0].ReeferVanNo);
+                                        $("#txtReeferVanId").val(result[0].ReeferVanID);
+                                        $("#lblContent").html(result[0].Content);
+
+                                        $("#txtPalletBarcode").focus();
+
+
+                                    }
+                                })
+
+                            }
+        
+                        } else {
+                            alert("Unknown error");
+                            return false;
+                        }
+
+
+                    }
+                })
+
+            }
+        })
+
+
+        $("#txtReeferVanBC").bind('keydown', function(e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //check account session
+                 $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            var reefervanbc = $("#txtReeferVanBC").val();
+                            var prefixreefervanbc = GetBarcodeType(reefervanbc);
+
+                            if (prefixreefervanbc == BID_REEFER_VAN) {
+                                
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "coldstorage/DisplayReeferVanData",
+                                    data: {
+                                        reefervanbc: reefervanbc
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            $("#txtRVIdClean, #txtReeferVanNo,#txtReeferVanId").val("");
+                                            $("#lblContent").html("");
+
+                                            alert("Invalid Reefer Van Barcode!");
+                                            return;
+                                        }
+
+                                        var result = JSON.parse(response);
+                                        $("#txtRVIdClean").val(result[0].ReeferVanID);
+                                        $("#txtReeferVanNo").val(result[0].ReeferVanNo);
+                                        $("#txtReeferVanId").val(result[0].ReeferVanID);
+                                        $("#lblContent").html(result[0].Content);
+
+                                        $("#txtPalletBarcode").focus();
+                                        
+                                    }
+                                })
+
+                            }else {
+                                alert("Barcode Error!");
+                                return;
+                            }
+                        }
+                    }
+                })
+
+            }
+
+        })// end reefervan barcode
+
+        $('#txtReeferVanNo').bind('keydown', function (e) {
+           
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                 $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            var rvno = $.trim($('#txtReeferVanNo').val());
+
+                            if (rvno == '') {
+                                alert("Error: Invalid Reefer Van No");
+                                return false;
+                            }
+
+                            $.ajax({
+                                type: "POST",
+                                url: baseUrl + "coldstorage/DisplayReeferVanId",
+                                data: {
+                                    rvno: rvno
+                                },
+                                success: function (response, status) {
+                                    if (response == "0") {
+                                        alert("Invalid Reefer Van ID!");
+                                        return false;
+                                    }
+
+                                    var result = JSON.parse(response);
+                                    $("#lblContent").html(result[0].Content);
+                                    $("#txtRVIdClean").val(result[0].ReeferVanID);
+
+                                    $("#txtPalletBarcode").focus();
+                                }
+                            })
+
+                        }
+                    }
+                })
+
+
+
+            }
+        })// end reefervan no
+
+
+        $('#txtPalletBarcode').bind('keydown', function (e) {
+
+            //Press Enter
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                 $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            var palletbarcode = $.trim($('#txtPalletBarcode').val());
+                            var prefixpalletbarcode = GetBarcodeType(palletbarcode);
+
+                            if (prefixpalletbarcode == BID_PALLET) {
+                                
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "coldstorage/DisplayPalletNumber",
+                                    data: {
+                                        palletbarcode: palletbarcode
+                                    },
+                                    success: function (response, status) {
+                                        if (response == "0") {
+                                            alert("Pallet No. Not Found");
+                                            return false;
+                                        }
+
+                                        var result = JSON.parse(response);
+
+                                        var dateString = result[0].datetimepacked.substr(6);
+                                        var currentTime = new Date(parseInt(dateString));
+                                        var month = currentTime.getMonth() + 1;
+                                        var day = currentTime.getDate();
+                                        var year = currentTime.getFullYear();
+                                        var datepacked = month + "/" + day + "/" + year;
+
+                                        $("#lblPalletNo").html(result[0].palletno);
+                                        $("#lblDatePacked").html(datepacked);
+                                        $("#txtPort").val(result[0].portcode);
+                                        $("#lblProductSpecCode").html(result[0].productspeccode)
+                                        $("#txtPalletNoClean").val(result[0].palletno);
+
+                                    }
+                                })
+
+                            } else {
+                                alert("Barcode Errror!");
+                                return;
+                            }
+                        }
+                    }
+                })
+
+            }
+        })// end pallet barcode
+
+
+
+        function GetBarcodeType(strBarcode) {
+            var retBarcode;
+
+            if (strBarcode.length == 16 || strBarcode.length == 10) {
+
+                retBarcode = strBarcode.substring(0,2);
+                retBarcode = Math.round(retBarcode);
+            
+            }else {
+                retBarcode = -1;
+            }
+
+            return retBarcode;
+
+        }
+
+
+    })
+</script>

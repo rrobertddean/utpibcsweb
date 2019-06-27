@@ -1,0 +1,669 @@
+﻿<table style="width:100%">
+    <tr>
+        <td style="text-align: center;"><b>Loading - Palletize - Reefer Van</b></td>
+    </tr>
+
+    <tr>
+        <td>
+            <label>Shpmnt Cd:</label> <input type="text" id="txtShipmentCode" class="inputlayout" style="width:60px;" /> 
+            <label>Port: </label><input type="text" id="txtPort" class="inputlayout" style="width:60px;" />
+        </td>
+    </tr>
+
+    <tr>
+        <td><label id="lblVesselVoyage" class="yellow"></label></td>   
+    </tr>
+
+    <tr>
+        <td>Reefer Van Barcode: <input type="text" id="txtReeferVanBarcode" class="inputlayout" style="width:170px;" /></td>
+    </tr>
+
+    <tr>
+        <td><label>Van No: </label> <input type="text" id="txtReeferVanNo" style="width:140px;" class="inputlayout" /></td>
+    </tr>
+
+    <tr>
+        <td>
+            <label>Pallet Barcode: <label> &nbsp;&nbsp;&nbsp; Qty: </label><input type="text" id="txtQty" style="width:50px;" class="inputlayout" /></label>
+            <input type="text" style="width:190px;" id="txtPalletBarcode" class="inputlayout" />
+        </td>
+    </tr>
+
+    <tr>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>Pallet #: <label id="lblPalletNo" class="yellow" style="display:inline-block;width:100px;"></label> PH: <label id="lblPHCode" class="yellow"></label></td>
+    </tr>
+
+    <tr>
+        <td>Brand: <label id="lblBrand" class="yellow"></label></td>
+    </tr>
+
+    <tr>
+        <td>Date Packed: <label id="lblDatePacked" class="yellow"></label></td>
+    </tr>
+
+    <tr>
+        <td>Cont <label id="lblCont" class="yellow"></label></td>
+    </tr>
+
+    <tr style="display: none;">
+        <td>
+            <input type="hidden" id="txtVesselId" />
+            <input type="hidden" id="txtPortId" />
+            <input type="hidden" id="txtRVID" />
+            <input type="hidden" id="txtQtyOrig" />
+            <input type="hidden" id="txtRopeSling" />
+        </td>
+    </tr>
+
+    <tr>
+        <td>
+            <b>
+            Press Alt+: 1-Save, 2-Clear Entry,<br />
+            3-Back to Loading Pallet Menu,<br />
+            4-Logout, 5-Unload Pallet             
+            </b>
+        </td>   
+    </tr>
+
+</table>
+
+
+<script type="text/javascript">
+    var baseUrl = getbaseUrl();
+    var BID_REEFER_VAN = 4;
+    var BID_PALLET = 1;
+
+    $(document).ready(function(){
+        $("#txtShipmentCode").focus();
+
+        $("html").bind("keydown", function(e) {
+            
+            //Press alt + 1 save
+            if (e.altKey == true && e.keyCode == 49) {
+
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var palletno = $("#lblPalletNo").html();
+                            var rvno = $("#txtReeferVanNo").val();                                                                                              
+                            var rvid = $("#txtRVID").val();
+                            var dismantled = "N";
+                            var shipmentid = $("#txtShipmentCode").val();
+                            var vesselid = $("#txtVesselId").val();
+                            var portid = $("#txtPortId").val();
+                            var portcode = $("#txtPort").val();
+                            var intQty = $("#txtQty").val();
+
+                            if ($.trim(palletno).length > 0 && $.trim(rvno).length > 0 && $.trim(vesselid) > 0 && shipmentid > 0 
+                                && portid > 0 && intQty > 0 ) {
+                                    
+                                //check if is port matched
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/IsPortMatched",
+                                    data: {
+                                        portid: portid,
+                                        portcode: portcode
+                                    },  
+                                    success: function(response,status) {
+                                        if (response == "1") {
+                                            
+                                            //Release from coldstorage 2
+                                            $.ajax({
+                                                type: "POST",
+                                                url: baseUrl + "loading/ReleaseFromColdStorage2",
+                                                data: {
+                                                    palletno:palletno,
+                                                    remarks: "for loading"
+                                                },
+                                                success: function(response,status) {
+                                                    if (response != "0") {
+                                                        alert("Database Error");
+                                                        return;
+                                                    }
+
+                                                    //Insert Loading Reefer Van
+                                                    $.ajax({
+                                                        type: "POST",
+                                                        url: baseUrl + "loading/InsertLoadingReeferVan",
+                                                        data: {
+                                                            palletno: palletno,
+                                                            dismantled: dismantled,
+                                                            shipmentid: shipmentid,
+                                                            portid: portid,
+                                                            rvid: rvid,
+                                                            rvno: rvno,
+                                                            intQty: intQty
+                                                        },
+                                                        success: function(response, status) {
+                                                            if (response == "99") {
+                                                                alert("Invalid Reefer Van No!");
+                                                                return;
+                                                            }
+
+                                                            if (response == "-1") {
+                                                                alert("DB Error! Pls login again.");
+                                                                return;
+
+                                                            }else if (response == "-3") {
+                                                                alert("Shipment Loading Already Done!");
+                                                                return;
+
+                                                            }else if (response == "-4") {
+                                                                alert("Hatch Already Closed!");
+                                                                return;
+
+                                                            }else if (response == "-2") {
+                                                                alert("Pallet Already Loaded!");
+                                                                return;
+
+                                                            }else if (response == "-5") {
+                                                                alert("Hatch already full!");
+                                                                return;
+
+                                                            }else if (response == "-6") {
+                                                                alert("Pallet is inactive!");
+                                                                return;
+
+                                                            }else if (response == "-7") {
+                                                                alert("Pallet already in this Van!");
+                                                                return;
+
+                                                            }else if (response == "-8") {
+                                                                alert("Vessel, Hatch did not match!");
+                                                                return;
+
+                                                            }else if (response == "0") {
+                                                                alert("Pallet loaded succesfully");
+                                                                $("#lblPalletNo, #lblBrand, #lblDatePacked, #lblPHCode, #lblCont").html("");
+                                                                $("#txtPalletBarcode, #txtQty").val("");
+
+
+                                                                $.ajax({
+                                                                    type: "POST",
+                                                                    url: baseUrl + "loading/DisplayReeferVanData2",
+                                                                    data: {
+                                                                        rvid: rvid,
+                                                                        shipmentid: shipmentid,
+                                                                        isloading: "true"
+                                                                    },
+                                                                    success: function(response,status) {
+                                                                        if (response == "0") {
+                                                                            $("#txtRVID, #txtReeferVanNo").val("");
+                                                                            $("#lblCont").html("");
+                                                                            $("#txtReeferVanBarcode").focus();
+
+                                                                            alert("Invalid Reefer Van ID!");
+                                                                            return;
+                                                                        }
+
+                                                                        var result = JSON.parse(response);
+                                                                        $("#txtRVID").val(result[0].ReeferVanID);
+                                                                        $("#txtReeferVanNo").val(result[0].ReeferVanNo);
+                                                                        $("#lblCont").html(result[0].Content);
+
+                                                                        $("#txtPalletBarcode").focus();
+                                                                    }
+
+                                                                })
+
+
+                                                            }else {
+                                                                alert("Loading Error! Pls login again");
+                                                                return;
+                                                            }
+                                                        }
+
+
+                                                    })
+
+                                                }
+                                            })
+
+                                        }else {
+                                            alert("PortCode, PortID did not match!");
+                                            return;
+                                        }
+                                    }
+                                })
+
+
+                            }else {
+                                alert("Error: Please Scan a Pallet");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+
+            }// end alt + 1 save
+
+            //Press alt + 2 clear entry
+            if (e.altKey == true && e.keyCode == 50) {
+                $("#lblPalletNo, #lblBrand, #lblDatePacked, #lblCont, #lblPHCode").html("");
+                $("#txtPalletBarcode, #txtReeferVanBarcode, #txtReeferVanNo,#txtRVID, #txtQtyOrig, #txtQty").val("");
+
+                $("#txtPalletBarcode").focus();
+            }// end alt + 2 clear entry
+
+            //Press alt + 3 back to loading menu
+            if (e.altKey == true && e.keyCode == 51) {
+                window.location.href = baseUrl + "loading/LoadPallets";
+            }// end alt + 3  back to loading menu
+
+            //Press alt + 4 logout
+            if (e.altKey == true && e.keyCode == 52) {
+
+            }
+
+            //Press alt + 5 unload pallet
+            if (e.altKey == true && e.keyCode == 53) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var palletno = $("#lblPalletNo").html();
+                            var rvid = $("#txtRVID").val();
+                            
+                            if (palletno.length > 0) {
+                                
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/DeleteLoadingEntry",
+                                    data: {
+                                        palletno: palletno,
+                                        hatchholdid: 0,
+                                        remarks: ""
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "-2" || response =="-5") {
+                                            alert("Pallet Not Found!");
+                                            return;
+                                        }else if (response == "-1") {
+                                            alert("Database Error!");
+                                            return;
+                                        }else if (response == "-3") {
+                                            alert("Shipment Loading Already Done!");
+                                            return;
+                                        }else if (response == "-4") {
+                                            alert("Hatch Already Closed!");
+                                            return; 
+                                        }else if (response == "0") {
+
+                                            $("#lblPalletNo, #lblBrand, #lblDatePacked,  #lblPHCode").html("");
+                                            $("#txtPalletBarcode, #txtQty").val("");
+
+                                            alert("Pallet Unloaded Succesfully");
+                                            return;
+                                        }else {
+                                            alert("Database error");
+                                            return;
+                                        }
+                                    }
+                                })
+
+                            }else {
+                                alert("Error! Please Scan a Pallet...");
+                            }
+
+                        }
+                    }
+                })
+
+            }// end alt + 5 unload pallet
+
+        })
+
+        $("#txtShipmentCode").bind("keydown", function(e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+                $("#txtPort").focus();
+            }
+
+        })// end shipmentcode bind keydown
+
+        $("#txtPort").bind("keydown", function(e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var shipmentcode = $.trim($("#txtShipmentCode").val());
+                            var portcode = $.trim($("#txtPort").val());
+
+                            if (shipmentcode.length <= 0 || portcode.length <= 0) {
+                                alert("Invalid Shipment Code and Port");
+                                return;
+                            }
+
+                            $.ajax({
+                                type: "POST",
+                                url: baseUrl + "loading/GetShipmentRouteByCode",
+                                data: {
+                                    shipmentcode: shipmentcode,
+                                    port: portcode
+                                },
+                                success: function(response,status) {
+                                    if (response == "0") {
+                                        $("#txtVesselId, #txtPortId, #txtReeferVanBarcode").val("");
+                                        $("#lblVesselVoyage").html("");
+
+                                        alert("Invalid Shipment Route!");   
+                                        return;
+                                    }
+                                    var result = JSON.parse(response);
+                                    $("#lblVesselVoyage").html(result[0].VesselName + " " + result[0].VoyageNo);
+                                    $("#txtVesselId").val(result[0].VesselID);
+                                    $("#txtPortId").val(result[0].PortID);
+
+                                    $("#txtReeferVanBarcode").focus();
+
+
+
+                                }
+                            })
+
+                        }
+                    }
+                })
+
+            }//end alt + enter
+
+        })// end port bind keydown
+
+        $("#txtReeferVanBarcode").bind("keydown",function(e) {
+            
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var rvbarcode = $.trim($("#txtReeferVanBarcode").val());
+                            var shipcode = $("#txtShipmentCode").val();
+
+                            if (rvbarcode.length <= 0 || shipcode.length <=0 ) {
+                                $("#txtReeferVanNo").focus();
+                                return;
+                            }
+
+                            var prefixRVBarcode = GetBarcodeType(rvbarcode);
+                            if (prefixRVBarcode == BID_REEFER_VAN) {
+                                
+                                //Display Reefer Van Data
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/DisplayReeferVanData",
+                                    data: {
+                                        rvbarcode: rvbarcode,
+                                        shipcode: shipcode,
+                                        isloading: "true"
+                                    },
+                                    success: function(response,status){
+                                        if (response == "0") {
+                                            $("#txtRVID, #txtReeferVanNo").val("");
+                                            $("#lblCont").html("");
+                                            $("#txtReeferVanBarcode").focus();
+
+                                            alert("Invalid Reefer Van ID!");
+                                            return;
+                                        }
+
+                                        var result = JSON.parse(response);
+                                        $("#txtRVID").val(result[0].ReeferVanID);
+                                        $("#txtReeferVanNo").val(result[0].ReeferVanNo);
+                                        $("#lblCont").html(result[0].Content);
+
+                                        $("#txtPalletBarcode").focus();
+
+
+                                    }
+                                })
+
+                            }else {
+                                $("#txtRVID, #txtReeferVanNo").val("");
+                                $("#lblCont").html("");
+                                $("#txtReeferVanBarcode").focus();
+
+                                alert("Barcode Error!");
+                                return;
+                            }
+
+
+                        }
+                    }
+                })
+
+            }//end alt + enter
+
+
+        })// end reefervan barcode bind keydown
+
+        $("#txtReeferVanNo").bind("keydown", function(e) {
+            
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+
+                            var rvno = $("#txtReeferVanNo").val();
+                            var shipmentcode = $("#txtShipmentCode").val();
+
+                            if (rvno.length <= 0 || shipmentcode.length <= 0) {
+                                return;
+                            }    
+
+                            $.ajax({
+                                type: "POST",
+                                url: baseUrl + "loading/GetReeferVanIDLoading",
+                                data: {
+                                    rvno: rvno,
+                                    shipmentcode: shipmentcode,
+                                    isloading: "true"
+                                },
+                                success: function(response,status) {
+                                    if (response == "0") {
+                                        alert("Invalid Reefer Van ID!");
+
+                                        $("#txtReeferVanNo, #txtRVID").val("");
+                                        $("#lblCont").html("");
+
+                                        return;
+                                    }
+
+                                    var result = JSON.parse(response);
+                                    
+                                    $("#txtReeferVanNo").val(result[0].ReeferVanNo);
+                                    $("#txtRVID").val(result[0].ReeferVanID);
+                                    $("#lblCont").html(result[0].Content);
+
+                                    $("#txtPalletBarcode").focus();
+
+                                }
+                            })
+
+                        }
+                    }
+                })
+
+            }//end alt + enter
+
+        })// end reefervan number bind keydown
+
+        $("#txtPalletBarcode").bind("keydown", function(e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var palletbarcode = $.trim($("#txtPalletBarcode").val());
+                            var prefixpalletbarcode = GetBarcodeType(palletbarcode);
+
+                            if (prefixpalletbarcode == BID_PALLET) {
+                                //Display Loading Reefer Van Data
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/GetPalletInfo",
+                                    data: {
+                                        palletbarcode: palletbarcode
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            $("#lblPalletNo, #lblBrand, #lblPHCode, #lblDatePacked").html("");
+                                            $("#txtRopeSling, #txtQtyOrig, #txtQty").val("");
+
+                                            alert("Pallet not found!");
+                                            return;
+                                        }
+                                        var result = JSON.parse(response);
+
+                                        $("#lblPalletNo").html(result[0].palletno);
+                                        $("#txtRopeSling").val("N");
+                                        $("#lblBrand").html(result[0].productspeccode);
+                                        $("#lblPHCode").html(result[0].packinghousecode);
+
+                                        var dateString = result[0].datetimepacked.substr(6);    
+                                        var currentTime = new Date(parseInt(dateString));
+                                        var month = currentTime.getMonth() + 1;
+                                        var day = currentTime.getDate();
+                                        var year = currentTime.getFullYear();
+                                        var datepacked = month + "/" + day + "/" + year;
+
+                                        $("#lblDatePacked").html(datepacked);
+                                        $("#txtQtyOrig").val(result[0].QtyToLoad);
+                                        $("#txtQty").val(result[0].QtyToLoad);
+                                        
+
+                                        //Get Loading Details
+                                        $.ajax({
+                                            type: "POST",
+                                            url: baseUrl + "loading/GetLoadingDetails",
+                                            data: {
+                                                palletbarcode: palletbarcode
+                                            },
+                                            success: function(response,status) {
+                                                if (response == "0") {
+                                                    return;
+                                                }
+
+                                                var result = JSON.parse(response);
+                                                alert("Already in " + result[0].VesselName + " " + result[0].VoyageNo);
+
+                                            }
+                                        })
+
+                                    }
+                                })
+                            }else {
+                                alert("Barcode Error");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+                
+            }//end alt + enter
+
+        })// end palletbarcode bind keydown
+
+        $("#txtQty").bind("keydown", function(e) {
+            
+            if (e.altKey == true && e.keyCode == 13) {
+
+                var qty = $("#txtQty").val();
+                var qtyOrig = $("#txtQtyOrig").val();
+
+                if (qty > 0 && qtyOrig > 0) {
+
+                    if (qtyOrig < qty) {
+                        alert("Qty must be less than Orig Qty");
+                        $("#txtQty").val(qtyOrig);
+
+                        return;
+                    }
+
+                }else {
+                    alert("Invalid Entry");
+                    return;
+                }
+
+            }
+
+        })// end qty bind keydown
+
+
+    })
+
+    function GetBarcodeType(strBarcode) {
+        var retBarcode;
+
+        if (strBarcode.length == 16 || strBarcode.length == 10) {
+
+            retBarcode = strBarcode.substring(0,2);
+            retBarcode = Math.round(retBarcode);
+        
+        }else {
+            retBarcode = -1;
+        }
+
+        return retBarcode;
+
+    }
+
+</script>

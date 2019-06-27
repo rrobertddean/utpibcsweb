@@ -1,0 +1,800 @@
+﻿<table style="width:100%;">
+    <tr>
+        <td style="text-align: center;"><b>Loading - Breakbulk - Hatch</b></td>
+    </tr>
+
+    <tr>
+        <td>
+            <label>Shipmnt Cd:</label> <input type="text" id="txtShipmentCode" class="inputlayout" style="width: 60px;" />
+            <label>Port:</label><input type="text" id="txtPort" class="inputlayout" style="width:60px;" />
+        </td>
+    </tr>
+
+    <tr>
+        <td><label id="lblVesselVoyage" class="yellow"></label></td>
+    </tr>
+
+    <tr>
+        <td>Hatch Barcode: <input type="text" id="txtHatchBarcode" class="inputlayout" style="width:135px;" /></td>
+    </tr>
+
+    <tr>
+        <td><label>Hatch ID: </label> <input type="text" id="txtHatchId" style="width:60px;" class="inputlayout" /> Hatch No.: <label id="lblHatchNo" style="width:40px;" class="yellow"></label></td>
+    </tr>
+
+    <tr>
+        <td><label>Pallet Barcode: </label> <input type="text" style="width:130px;" id="txtPalletBarcode" class="inputlayout" /></td>
+    </tr>
+
+    <tr>
+        <td><label>Qty: </label><input type="text" id="txtQty" style="width: 50px;" class="inputlayout" /></td>
+    </tr>
+
+    <tr>
+        <td>Pallet #: <label id="lblPalletNo" class="yellow" style="display:inline-block;width: 100px;"></label> PH: <label id="lblPHCode" class="yellow"></label></td>
+    </tr>
+
+    <tr>
+        <td>Brand: <label id="lblBrand" class="yellow"></label></td>
+    </tr>
+
+    <tr>
+        <td>Date Packed: <label id="lblDatePacked" class="yellow"></label></td>
+    </tr>
+
+    <tr>
+        <td><label>Rope Sling(Y/N): </label> <input type="text" id="txtRopeSling" style="width: 50px;" class="inputlayout" />Cont <label id="lblCont" class="yellow"></label></td>
+    </tr>
+
+    <tr>
+        <td>
+            <input type="hidden" id="txtQtyOrig" />
+            <input type="hidden" id="txtVesselId" />
+            <input type="hidden" id="txtPortId" />
+        </td>
+    </tr>
+
+
+    <tr>
+        <td>
+            <b>
+            Press Alt+: 1-Save, 2-Clear Entry,<br />
+            3-Back to Loading Menu,<br />
+            4-Logout, 5-Unload Pallet             
+            </b>
+        </td>   
+    </tr>
+
+</table>
+
+
+<script type="text/javascript">
+    var baseUrl = getbaseUrl();
+
+    $(document).ready(function () {
+        var BID_PALLET = 1;
+        var BID_HATCH_DECK = 5;
+
+
+        $("#txtShipmentCode").focus();
+
+
+        $("#txtShipmentCode").bind('keydown', function (e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+                $("#txtPort").focus();
+            }
+
+        })//end shipmentcode bind keydown
+
+        $("#txtPort").bind('keydown', function (e) {
+            var shipmentrouteresult;
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var shipmentcode = $.trim($("#txtShipmentCode").val());
+                            var portcode = $.trim($("#txtPort").val());
+
+                            if (shipmentcode.length > 0 && portcode.length > 0) {
+
+                                $("#lblVesselVoyage").html("");
+                                $("#txtVesselId, #txtPortId").val("");
+
+                                //GET SHIPMENT ROUTE BY CODE    
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/GetShipmentRouteByCode",
+                                    data: {
+                                        shipmentcode: shipmentcode,
+                                        port: portcode
+                                    },
+                                    success: function (response, status) {
+                                        if (response == "0") {
+                                            alert("Error! Invalid Shipment Route");
+                                            return;
+                                        }
+
+                                        shipmentrouteresult = JSON.parse(response);
+                                        var result = JSON.parse(response);
+                                        var portid = result[0].PortID;
+
+                                        //Check if port is for breakbulk
+                                        $.ajax({
+                                            type: "POST",
+                                            url: baseUrl + "loading/IsPortBreakbulk",
+                                            data: {
+                                                portid: portid
+                                            },
+                                            success: function (response, status) {
+                                                if (response == "0") {
+
+                                                    $("#lblVesselVoyage").html(shipmentrouteresult[0].VesselName + " " + shipmentrouteresult[0].VoyageNo);
+                                                    $("#txtVesselId").val(shipmentrouteresult[0].VesselID);
+                                                    $("#txtPortId").val(shipmentrouteresult[0].PortID);
+
+                                                    $("#txtHatchBarcode").focus();
+
+                                                } else {
+                                                    alert("Error! Port Not for Breakbulk!");
+                                                    return;
+                                                }
+                                            }
+                                        })
+
+
+                                    }
+
+
+
+                                })
+                            }
+
+
+                        }
+                    }
+                })
+
+            }// end alt + enter
+
+
+        })//end port bind keydown
+
+
+        $("#txtHatchBarcode").bind('keydown', function (e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //check account sesssion
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+
+                            var hatchbarcode = $.trim($("#txtHatchBarcode").val());
+                            var shipcode = $.trim($("#txtShipmentCode").val());
+                            var vesselid = $.trim($("#txtVesselId").val());
+
+                            if (shipcode.length <= 0) {
+                                alert("Invalid Shipment Code");
+                                return false;
+                            }
+
+                            if (vesselid.length <= 0) {
+                                alert("Invalid Vessel ID");
+                                return false;
+                            }
+
+                            if (hatchbarcode.length == 16 || hatchbarcode.length == 10) {
+
+                                var barcodetype = Math.round(hatchbarcode.substring(0, 2));
+
+                                if (barcodetype == BID_HATCH_DECK) {
+
+                                    $.ajax({
+                                        type: "POST",
+                                        url: baseUrl + "loading/GetHatchholdByIDNew",
+                                        data: {
+                                            hatchbarcode: hatchbarcode,
+                                            shipmentcode: shipcode,
+                                            vesselid: vesselid
+                                        },
+                                        success: function (response, status) {
+                                            if (response == "0") {
+                                                alert("Invalid Hatch and Hold ID!");
+                                                return;
+                                            }
+                                            var result = JSON.parse(response);
+
+                                            if (result[0].VesselID == vesselid) {
+
+                                                $("#txtHatchId").val(result[0].HatchHoldID);
+                                                $("#lblHatchNo").html(result[0].HatchNo + " " + result[0].DeckNo);
+                                                $("#lblCont").html(result[0].Content);
+                                                $("#txtVesselId").val(result[0].VesselID);
+
+                                                $("#txtPalletBarcode").focus();
+
+                                            } else {
+                                                alert("Vessel and Hatch does not match.");
+                                                return false;
+
+                                            }
+
+                                        }
+                                    })
+
+
+                                } else {
+                                    alert("Barcode Error");
+                                    return false;
+                                }
+
+
+
+                            } else {
+                                alert("Barcode Error");
+                                return false;
+                            }
+
+
+
+                        }
+                    }
+                })
+
+            }//end alt + enter 
+
+        })//end hatchbarcode keydown
+
+
+        $("#txtHatchId").bind('keydown', function (e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var hatchidval = $.trim($("#txtHatchId").val());
+                            var shipcode = $.trim($("#txtShipmentCode").val());
+                            var vesselid = $.trim($("#txtVesselId").val());
+
+                            if (shipcode.length <= 0) {
+                                alert("Invalid Shipment Code.");
+                                return;
+                            }
+
+                            if (vesselid.length <= 0) {
+                                alert("Invalid Vessel ID");
+                                return;
+                            }
+
+                            if (hatchidval.length > 0) {
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/GetHatchHoldID",
+                                    data: {
+                                        hatchidval: hatchidval,
+                                        shipmentcode: shipcode
+                                    },
+                                    success: function (response, status) {
+                                        if (response == "0") {
+                                            alert("Invalid Hatch and Hold ID!");
+                                            return;
+                                        }
+
+                                        var result = JSON.parse(response);
+                                        if (result[0].VesselID = vesselid) {
+                                            $("#txtHatchId").val(result[0].HatchHoldID);
+                                            $("#lblHatchNo").html(result[0].HatchNo + " " + result[0].DeckNo);
+                                            $("#lblCont").html(result[0].Content);
+                                            $("#txtVesselId").val(result[0].VesselID);
+
+                                            $("#txtPalletBarcode").focus();
+
+                                        } else {
+                                            alert("Vessel and Hatch does not match.");
+                                            return;
+                                        }
+
+
+                                    }
+                                })
+
+                            } else {
+                                alert("Pls. Enter a Hatch ID!");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+            }//end alt + enter
+
+        })//end hatchid keydown
+
+
+        $("#txtPalletBarcode").bind('keydown', function (e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var palletbarcode = $.trim($("#txtPalletBarcode").val());
+
+                            if (palletbarcode.length > 0) {
+                                var prefixbarcode = GetBarcodeType(palletbarcode);
+                            
+                                if (prefixbarcode == BID_PALLET) {
+
+                                    //Get Pallet Info
+                                    $.ajax({
+                                        type: "POST",
+                                        url: baseUrl + "loading/GetPalletInfo",
+                                        data: {
+                                            palletbarcode: palletbarcode
+                                        },
+                                        success: function(response,status) {
+                                            if (response == "0") {
+                                                alert("Pallet not found!");
+                                                return;
+                                            }
+                                            var result = JSON.parse(response);
+
+                                            $("#lblBrand").html(result[0].productspeccode);
+                                            $("#lblPHCode").html(result[0].packinghousecode);
+
+                                            var dateString = result[0].datetimepacked.substr(6);
+                                            var currentTime = new Date(parseInt(dateString));
+                                            var month = currentTime.getMonth() + 1;
+                                            var day = currentTime.getDate();
+                                            var year = currentTime.getFullYear();
+                                            var datepacked = month + "/" + day + "/" + year;
+
+                                            $("#lblPalletNo").html(result[0].palletno);
+                                            $("#lblDatePacked").html(datepacked);
+                                            $("#txtQty, #txtQtyOrig").val(result[0].QtyToLoad);
+                                            $("#txtRopeSling").val("N");
+
+                                            $("#txtQty").focus();
+
+                                            //Check Loading Details
+                                            $.ajax({
+                                                type: "POST",
+                                                url: baseUrl + "loading/GetLoadingDetails",
+                                                data: {
+                                                    palletbarcode: palletbarcode
+                                                },
+                                                success: function (response, status) {
+                                                    if (response == "0") {
+                                                        return;
+                                                    }
+
+                                                    var result = JSON.parse(response);
+
+                                                    alert("Already in " + result[0].VesselCode + " " + result[0].VoyageNo);
+                                                    return;
+                                                }
+                                            })
+
+                                        }
+                                    })
+
+
+                                }else {
+                                    alert("Barcode Error!");
+                                    return;
+                                }
+                                
+
+                            } else {
+                                alert("No Barcode");
+                                return;
+
+                            }
+
+                        }
+                    }
+                })
+
+            }//end alt + enter
+
+        })// end pallet barcode keydown
+
+        $("#txtQty").bind('keydown',function (e) {
+            
+            if (e.altKey == true && e.keyCode == 13) {
+                
+                var qty = $("#txtQty").val();
+                var qtyOrig = $("#txtQtyOrig").val();
+
+                if (qty > 0 && qtyOrig > 0) {
+
+                    if (qtyOrig < qty) {
+                        alert("Qty must be less than orig qty.");
+                        $("#qty").val(qtyOrig);
+                        $("#qty").focus();
+                    }else {
+                        $("#txtRopeSling").focus();
+                    }
+
+                }else {
+                    alert("Invalid Entry");
+                    return;
+                }
+
+
+            }
+
+        })// end qty keydown
+
+        $("#txtRopeSling").bind('keydown', function(e) {
+            
+            if (e.altKey == true && e.keyCode == 13) {
+
+                var ropesling = $("#txtRopeSling").val();
+
+                if (ropesling.toUpperCase() == "Y" || ropesling.toUpperCase() == "N") {
+
+                }else {
+                    alert("Invalid Entry");
+                    return;
+                }
+
+            }
+
+        })// end rope sling keydown
+
+
+        $("html").bind("keydown", function(e) {
+            
+            //Press alt + 1 - Save
+            if (e.altKey == true && e.keyCode == 49) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                           
+                            var palletno = $("#lblPalletNo").html();
+                            var ropesling = $("#txtRopeSling").val();
+                            var dismantled = "Y";
+                            var hatchholdid = $("#txtHatchId").val();
+                            var vesselid = $("#txtVesselId").val();
+                            var shipmentcode = $("#txtShipmentCode").val();
+                            var portid = $("#txtPortId").val();
+                            var portcode = $("#txtPort").val();
+                            var qty = $("#txtQty").val();
+
+                            if (palletno.length > 0 && hatchholdid.length > 0 && vesselid.length > 0 && shipmentcode > 0 && 
+                                portid > 0  && qty > 0) {
+
+                                //check if port is for breakbulk
+                                $.ajax({
+                                    type:"POST",
+                                    url: baseUrl + "loading/IsPortBreakbulk",
+                                    data: {
+                                        portid:portid
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            
+                                            //check if port matched
+                                            $.ajax({
+                                                type: "POST",
+                                                url: baseUrl + "loading/IsPortMatched",
+                                                data: {
+                                                    portid: portid,
+                                                    portcode: portcode
+                                                },
+                                                success: function(response,status) {
+
+                                                    if (response != "1") {
+                                                        alert("PortCode, PortID did not match!");
+                                                        return;
+                                                    }
+
+                                                    //Release from cold storage2
+                                                    $.ajax({
+                                                        type: "POST",
+                                                        url : baseUrl + "loading/ReleaseFromColdStorage2",
+                                                        data: {
+                                                            palletno:palletno,
+                                                            remarks: "for loading"
+                                                        },
+                                                        success: function(response,status) {
+                                                            if (response != "0") {
+                                                                alert("Database Error");
+                                                                return;
+                                                            }
+
+
+
+                                                            //Insert loading hatch new
+                                                            $.ajax({
+                                                                type: "POST",
+                                                                url: baseUrl + "loading/InsertLoadingHatchNew",
+                                                                data: {
+                                                                    palletno: palletno,
+                                                                    ropesling: ropesling,
+                                                                    dismantled: dismantled,
+                                                                    shipcode: shipmentcode,
+                                                                    portid: portid,
+                                                                    hatchholdid: hatchholdid,
+                                                                    intqty:qty,
+                                                                    remarks: ""
+                                                                },
+                                                                success: function(response,status) {
+                                                                    $("#txtPalletBarcode").focus();
+
+                                                                    if (response == "-9") {
+                                                                        alert("Invalid RopeSling Value!");
+                                                                        return;
+                                                                    }else if (response == "-1") {
+                                                                        alert("DB Error! Pls login again");
+                                                                        return;
+                                                                    }else if (response == "-3") {
+                                                                        alert("Shipment Loading Already Done!");
+                                                                        return;
+                                                                    }else if (response == "-4") {
+                                                                        alert("Hatch Already Closed!");
+                                                                        return;
+                                                                    }else if (response == "-2") {
+                                                                        alert("Pallet Already Loaded!");
+                                                                        return;
+                                                                    }else if (response == "-5") {
+                                                                        alert("Hatch already full!");
+                                                                        return;
+                                                                    }else if (response == "-6") {
+                                                                        alert("Pallet is inactive!");
+                                                                        return;
+                                                                    }else if (response == "-7") {
+                                                                        alert("Pallet already in this Hatch!");
+                                                                        return;
+                                                                    }else if (response == "-8") {
+                                                                        alert("Vessel, Hatch did not match!");
+                                                                        return;
+                                                                    }else if (response == "0") {
+                                                                        $("#lblPalletNo, #lblBrand, #lblDatePacked, #lblvalue, #lblCont, #lblPHCode").html("");
+                                                                        $("#txtPalletBarcode, #txtRopeSling, #txtQty").val("");
+                                                                        alert("Pallet succesfully loaded");
+                                                                    
+                                                                        var hatchholdid = $.trim($("#txtHatchId").val());
+                                                                        if (hatchholdid.length > 0) {
+                                                                            
+                                                                            $.ajax({
+                                                                                type: "POST",
+                                                                                url: baseUrl + "loading/GetHatchholdByIDNew2",
+                                                                                data: {
+                                                                                    hatchbarcode: hatchholdid,
+                                                                                    shipmentcode: shipmentcode,
+                                                                                    vesselid: vesselid
+                                                                                },
+                                                                                success: function(response,status) {
+                                                                                    if (response == "0") {
+                                                                                        alert("Invalid Hatch and Hold ID!");
+                                                                                        return;
+                                                                                    }
+
+                                                                                    var result = JSON.parse(response);
+
+                                                                                    if (result[0].VesselID != vesselid) {
+                                                                                        alert("Vessel and Hatch does not match");
+                                                                                        return;
+                                                                                    }
+
+                                                                                    $("#txtHatchId").val(result[0].HatchHoldID);
+                                                                                    $("#lblHatchNo").html(result[0].HatchNo + " " + result[0].DeckNo);
+                                                                                    $("#txtCellNo").val(result[0].Content);
+                                                                                    $("#txtVesselId").val(result[0].VesselID);
+                                                                                    $("#lblCont").html(result[0].Content);
+
+                                                                                    $("#txtPalletBarcode").focus();
+                                                                                            
+                                                                                }
+                                                                            })
+
+                                                                        }else {
+                                                                            alert("Please Enter a Hatch id");
+                                                                            return;
+                                                                        }
+
+                                                                    }else if (response == "-11") {
+                                                                        alert("Vessel, PortID did not match!");
+                                                                        return; 
+                                                                    }else if (response == "-12") {
+                                                                        alert("Not in StowagePlan");
+                                                                        return;
+                                                                    }else if (response == "-13") {
+                                                                        alert("Excess Allocation");
+                                                                        return;
+                                                                    }else {
+                                                                        alert("Loading Error!");
+                                                                        return;
+                                                                    }
+                                                                }
+                                                            })
+
+
+
+                                                        }
+                                                    })
+
+
+
+                                                }
+                                            })
+
+
+                                        }else {
+                                            alert("Error! Port Not for Breakbulk!");
+                                            return;
+                                        }
+                                    }
+                                    
+                                })    
+                                
+
+                            }else {
+                                alert("Invalid Entry");
+                                $("#txtPalletBarcode").focus();
+                                return false;
+                            }
+
+                        }
+                    }
+                })
+
+            }//end alt + 1 Save
+
+            //Press alt + 2 - Clear Entry
+            if (e.altKey == true && e.keyCode == 50) {
+                $("#txtPalletBarcode, #txtQty").val("");
+                $("#lblPalletNo, #lblBrand, #lblDatePacked, #lblPHCode").html("");
+                $("#txtRopeSling").val("N");
+                $("#txtPalletBarcode").focus();
+            }
+
+            //Press alt + 3 - Back to loading menu
+            if (e.altKey == true && e.keyCode == 51) {
+                window.location.href = baseUrl + "loading/LoadPallets";
+            }
+
+            //Press alt + 4 - Logout
+            if (e.altKey == true && e.keyCode == 52) {
+
+            }
+
+            //Press alt + 5 - Unload Pallet
+            if (e.altKey == true && e.keyCode == 53) {
+
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var palletno = $.trim($("#lblPalletNo").html());
+                            var hatchholdid = $.trim($("#txtHatchId").val());
+
+                            if (palletno.length > 0 && hatchholdid.length > 0) {
+
+                                //Delete loading entry
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/DeleteLoadingEntry",
+                                    data: { 
+                                        palletno: palletno,
+                                        hatchholdid: hatchholdid,
+                                        remarks: ""
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "-2" || response =="-5") {
+                                            alert("Pallet Not Found!");
+                                            return;
+                                        }else if (response == "-1") {
+                                            alert("Database Error!");
+                                            return;
+                                        }else if (response == "-3") {
+                                            alert("Shipment Loading Already Done!");
+                                            return;
+                                        }else if (response == "-4") {
+                                            alert("Hatch Already Closed!");
+                                            return; 
+                                        }else if (response == "0") {
+                                            $("#lblPalletNo, #lblBrand, #lblDatePacked, #lblvalue, #lblCont, #lblPHCode").html("");
+                                            $("#txtCellNo, #txtQty").val("");
+
+                                            alert("Pallet Unloaded Succesfully");
+                                            return;
+                                        }else {
+                                            alert("Database error");
+                                            return;
+                                        }
+                                    }
+
+                                })
+
+                            }else {
+                                alert("Error: Please Scan Hatch and Pallet");
+                                return false;     
+                            }
+
+
+                        }
+                    }
+                })
+
+
+            }//end alt + 5 unload pallet
+
+
+        })//end html bind keydown
+
+
+        function GetBarcodeType(strBarcode) {
+            var retBarcode;
+
+            if (strBarcode.length == 16 || strBarcode.length == 10) {
+                retBarcode = strBarcode.substring(0,2);
+                retBarcode = Math.round(retBarcode);
+            }else {
+                retBarcode = -1;
+            }
+
+            return retBarcode;
+
+        }
+
+        function isUpperCase(str) {
+            return str === str.toUpperCase();
+        }
+
+    })
+
+
+</script>

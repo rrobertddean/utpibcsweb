@@ -1,0 +1,284 @@
+﻿<table style="width: 100%"> 
+    <tr>
+        <td style="text-align: center;"><b>Loading - SLT</b></td>
+    </tr>
+
+    <tr>
+        <td>Shipment Code: <input type="text" style="width:120px;" class="inputlayout" id="txtShipmentCode" /></td>
+    </tr>
+
+    <tr>
+        <td>1 - Set End Hatch Loading Time</td>
+    </tr>
+
+    <tr>
+        <td>2 - Set End Loading Time</td>
+    </tr>
+
+    <tr style="display:inline-block;padding-top:20px;">
+        <td>Choose an Option: <input type="text" id="txtOption" class="inputlayout" style="width:50px;" /></td>
+    </tr>
+
+    <tr>
+        <input type="hidden" id="txtShipmentID"  />
+    </tr>
+
+    <tr>
+        <td>
+            <b> Press Alt+: 1-Continue, 2-Clear Entry, <br />
+            3-Back to Loading Menu,<br />
+            4-Logout</b>
+        </td>
+    </tr>   
+
+
+</table>
+
+<script type="text/javascript">
+
+    $(document).ready(function() {
+
+        var baseUrl = getbaseUrl();
+        $("#txtShipmentCode").focus();
+
+        $("html").bind("keydown",function(e) {
+
+            //Press alt + 1 Continue
+            if (e.altKey == true && e.keyCode == 49) {
+
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var shipmentcode = $.trim($("#txtShipmentCode").val());
+                            var option = $.trim($("#txtOption").val());
+
+                            if (shipmentcode.length > 0 && option.length > 0) {
+                                
+                                if (option == "1" || option == "2") {   
+
+                                    $.ajax({
+                                        type: "POST",
+                                        url: baseUrl + "loading/GetShipmentInfoByName",
+                                        data: {
+                                            shipmentcode : shipmentcode
+                                        },
+                                        success: function(response,status) {
+                                            if (response == "0") {
+                                                alert("Invalid Shipment Code!");
+                                                return;
+                                            }
+                                            var result = JSON.parse(response);
+                                            $("#txtShipmentID").val(result[0].ShipmentID);
+                                            var shipmentid = result[0].ShipmentID;
+                                            
+                                            if (option == "1") {
+                                                window.location.href= baseUrl + "loading/EndHatchLoadingTime?shipmentid="+shipmentid;
+                                            }else if (option == "2") {
+                                                
+                                                var shipmentcode = $("#txtShipmentCode").val();
+
+                                                $.ajax({
+                                                    type: "POST",
+                                                    url: baseUrl + "loading/InsertLoadingEndTime",
+                                                    data: {
+                                                        shipmentcode:shipmentcode
+                                                    },
+                                                    success: function(response,status) {
+                                                        if (response == "0") {
+                                                            alert("Succesfull");
+                                                            window.location.href=baseUrl + "home/loading";
+                                                            return;
+                                                        }else if (response == "-2") {
+                                                            alert("Actual Time Already Exists!");
+                                                            return;
+                                                        }else if (response == "-3") {
+                                                            alert("Loading has not started yet");
+                                                            return;
+                                                        }else if (response == "-4") {
+                                                            alert("Please Insert Start Loading Time!");
+                                                        }else {
+                                                            alert("Database Error");
+                                                            return;
+                                                        }
+                                                    }
+                                                })
+
+                                            }
+                                        }
+                                    })
+                                    
+                                }else {
+                                    alert("Error Invalid Option");
+                                    return;
+                                }
+
+                            }else {
+                                alert("Invalid Shipment Code and Option");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+            }//end alt + 1 Continue
+
+            //Press alt + 2 Clear Entry
+            if (e.altKey == true && e.keyCode == 50) {
+                $("#txtShipmentCode, #txtOption, #txtShipmentID").val("");
+                $("#txtShipmentCode").focus();
+            }//end alt + 2 Continue
+
+            //Press alt + 3 Back to Loading Menu
+            if (e.altKey == true && e.keyCode == 51) {
+                window.location.href = baseUrl + "home/loading";
+            }//end alt + 3 Back to Loading Menu
+
+        })//end html bind keydown
+
+        $("#txtShipmentCode").bind("keydown",function(e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+
+                           var shipmentcode = $("#txtShipmentCode").val();
+
+                            if (shipmentcode.length > 0) {
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/GetShipmentInfoByName",
+                                    data: {
+                                        shipmentcode : shipmentcode
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            alert("Invalid Shipment Code!");
+                                            $("#txtShipmentID").val("");
+                                            return;
+                                        }
+                                        var result = JSON.parse(response);
+                                        $("#txtShipmentID").val(result[0].ShipmentID);
+                                        $("#txtOption").focus();
+
+                                    }
+                                })
+
+
+                            }
+                
+                        }
+                    }
+                })
+            }//end alt + enter
+
+
+        })// end shipment code bind keydown
+
+        $("#txtOption").bind("keydown", function(e) {
+            
+            if (e.altKey == true && e.keyCode == 13) {
+
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var option = $("#txtOption").val();
+                            var shipmentid = $("#txtShipmentID").val();
+                            var shipmentcode = $("#txtShipmentCode").val();
+
+                            if (option == "1") {
+                                
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/GetShipmentInfoByName",
+                                    data: {
+                                        shipmentcode : shipmentcode
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            alert("Invalid Shipment Code!");
+                                            $("#txtShipmentCode").focus();
+                                            return;
+                                        }
+                                        var result = JSON.parse(response);
+                                        $("#txtShipmentID").val(result[0].ShipmentID);
+                                        var shipmentid = result[0].ShipmentID;
+                                        
+                                        window.location.href= baseUrl + "loading/EndHatchLoadingTime?shipmentid="+shipmentid;
+
+                                    }
+
+                                })
+
+                                
+
+                            }else if (option == "2") {
+                                var shipmentcode = $("#txtShipmentCode").val();
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/InsertLoadingEndTime",
+                                    data: {
+                                        shipmentcode:shipmentcode
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            alert("Succesfull");
+                                            window.location.href=baseUrl + "home/loading";
+                                            return;
+                                        }else if (response == "-2") {
+                                            alert("Actual Time Already Exists!");
+                                            return;
+                                        }else if (response == "-3") {
+                                            alert("Loading has not started yet");
+                                            return;
+                                        }else if (response == "-4") {
+                                            alert("Please Insert Start Loading Time!");
+                                        }else {
+                                            alert("Database Error");
+                                            return;
+                                        }
+                                    }
+                                })
+
+
+                            }else {
+                                alert("Error: Invalid Option!");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+            }//end alt + enter
+
+        })// end option bind keydown
+
+        
+    })
+
+</script>

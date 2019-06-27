@@ -1,0 +1,571 @@
+﻿
+<form action="@Url.Action("submitInsertPalletToColdstore","ColdStorage")" method="POST" id="frmColdStorageIPB">
+<table style="width:100%;">
+   <tr>
+        <td style="text-align: center;"><b>Cold Storage - IP - Bay</b></td>
+    </tr>
+
+    <tr>
+        <td>Bay Barcode.: <input type="text" id="txtBayBarcode" class="inputlayout" /></td>
+    </tr>
+    <tr>
+        <td>Bay No.: <input type="text" id="txtBayNo" class="inputlayout" style="width:60px;" /> Content: <label id="lblContent"></label></td>
+    </tr>
+   
+    <tr>
+        <td>Cell No: <input type="text" id="txtCellNo" name="cellno" class="inputlayout" style="width: 50px;" /></td>
+    </tr>
+
+    <tr>
+        <td>Pallet Barcode: <input type="text" id="txtPalletBC" class="inputlayout" /></td>
+    </tr>
+
+    <tr>
+        <td>Pallet No: <label id="lblPalletNo" style="display:inline-block;width:80px;"></label> Qty: <label id="lblQty"></label></td>
+    </tr>
+
+
+    <tr>
+        <td><label id="lblProductSpecCode"></label></td>
+    </tr>
+
+    <tr>
+        <td>Date Packed: <label id="lblDatePacked"></label></td>
+    </tr>
+    <tr>
+        <td>Port: <input type="text" id="txtPort" class="inputlayout" style="width: 70px;" /></td>
+    </tr>   
+    <tr>
+        <td>Remarks: <input type="text" id="txtRemarks" name="reason" class="inputlayout" /></td>
+    </tr>
+   @* <tr>
+        
+        <td align="right" colspan="2">
+            <input type="submit" value="Save" />
+        </td>
+    </tr>*@
+    <tr>
+        <td >
+        <b>
+            Press Alt+: 1 - Save, 2 - Clear Entry, 
+            <br />3 - Back to CS - IP Menu, 
+            <br />4 - Log Out, 5 - Release Pallet, 
+            <br />6 - Change Port
+        </b></td>
+    </tr>
+
+
+    <tr style="display:none">
+        <td>
+            <input type="hidden" id="txtBayId" name="bayid" />
+            <input type="hidden" id="txtPalletNo" name="palletno" />
+        </td>
+    </tr>
+   
+
+</table>
+
+</form>
+
+<script type="text/javascript">
+
+    var BID_CELL_BAY = 6;
+    var BID_PALLET = 1
+
+    var baseUrl = getbaseUrl();
+
+    $(document).ready(function () { 
+
+
+        $('#txtBayBarcode').focus();
+
+        $('body').bind('keydown', function (e) {
+
+            //Save
+            if (e.altKey == true && e.keyCode == 49) {
+
+                //Check Account Session
+                 $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            //document.forms["frmColdStorageIPB"].submit();
+                            var bayid = $("#txtBayId").val();
+                            var cellno = $("#txtCellNo").val();
+                            var palletno = $("#txtPalletNo").val();
+                            var reason = $("#txtRemarks").val();
+
+                            if (palletno == '') {
+                                alert('Error! Invalid Entry');
+                                return false;
+                            } else if (bayid == '') {
+                                alert('Error! Invalid Entry');
+                                return false;
+                            }
+
+                            //Start Process
+                            $.ajax({
+                                type: "POST",
+                                url: baseUrl + "coldstorage/submitInsertPalletToColdstore",
+                                data: {
+                                    bayid: bayid,
+                                    cellno: cellno,
+                                    palletno: palletno,
+                                    reason: reason
+                                },
+                                success: function (response, status) {
+
+                                    if (response == "-2") {
+                                        alert("Pallet already inside the CS!")
+                                        $("#lblPalletNo, #lblDatePacked, #lblProductSpecCode").html("");
+                                        $("#txtRemarks, #txtPalletBC, #txtPort, #txtCellNo").val("");
+
+                                        $("#txtPalletBC").focus();
+                                        return;
+                                    } else if (response == "-3") {
+                                        alert("Bay already Full!");
+
+                                        $("#txtCellNo, #txtBayBarcode , #txtBayNo").val("");
+                                        $("#txtBayNo").focus();
+
+                                        return;
+                                    } else if (response == "-4") {
+                                        alert("Pallet is Inactive!");
+                                        $("#lblPalletNo, #lblDatePacked, #lblProductSpecCode").html("");
+                                        $("#txtRemarks, #txtPalletBC, #txtPort").val("");
+                                    
+                                        $("#txtPalletBC").focus();
+
+                                        return;
+                                    }else if (response == "-5") {
+                                        alert("Invalid Cell No!");
+                                        $("#txtCellNo").val("");
+                                        $("#txtCellNo").focus();
+
+                                        return;
+                                    }else if (response == "-6") {
+                                        alert("Cell already occupied!");
+                                        $("#txtCellNo").val("");
+                                        $("#txtCellNo").focus();
+                                        
+                                        return;
+                                    } else if (response == "0") {
+                                        alert("Succesfull");
+                                        $("#txtPalletNo, #txtPort, #txtRemarks,#txtPalletBC").val("");
+                                        $("#lblPalletNo, #lblProductSpecCode, #lblDatePacked").html("");
+                                        $('#txtPalletBC').focus();
+
+                                        $.ajax({
+                                            type: "POST",
+                                            url: baseUrl + "coldstorage/GetColdStorageBay2",
+                                            data: {
+                                                bayid: bayid
+                                            },
+                                            success: function(response,status) {
+                                                if (response == "0") {
+                                                    alert("Bay not found");
+                                                    return;
+                                                }
+
+                                                var result = JSON.parse(response);
+                                                $("#lblContent").html(result[0].Content);
+                                                var cellno = result[0].CellNo;
+
+                                                if (cellno.length > 0 || cellno == "") {
+                                                    $("#txtCellNo").val(cellno);
+                                                    
+                                                }else {
+                                                    alert("Bay already full!");
+                                                    return;
+                                                }
+
+
+                                            }
+                                        })
+
+                                    } else {
+                                        alert("Unknown Error");
+                                        return;
+                                    }
+
+                                    
+
+                                }
+
+                            })
+                        }
+
+
+                    }
+                })
+
+
+
+            }
+
+            //Clear Entries
+            if (e.altKey == true && e.keyCode == 50) {
+
+                $("#txtBayNo, #txtBayId, #txtCellNo, #txtRemarks, #txtBayBarcode, #txtPalletBC, #txtPort").val("");
+                $("#lblPalletNo, #lblDatePacked, #lblProductSpecCode").html("");
+                $("#txtBayBarcode").focus();
+
+            }
+
+            //Insert Pallet
+            if (e.altKey == true && e.keyCode == 51) {
+                window.location.href = baseUrl + "coldstorage/InsertPallet";
+            }//end insert pallet
+
+            //Logout
+            if (e.altKey == true && e.keyCode == 52) {
+                window.location.href = baseUrl + "account/Logout";
+            }//end logout
+
+            //Release pallet
+            if (e.altKey == true && e.keyCode == 53) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            var palletno = $.trim($("#txtPalletNo").val());
+                            var remarks = $("#txtRemarks").val();
+
+                            if (palletno == '') {
+                                alert('Error: Please scan a pallet!');
+                                return false;
+                            }
+
+                            $.ajax({
+                                type: "POST",
+                                url: baseUrl + "coldstorage/submitReleasePallet",
+                                data: {
+                                    palletno: palletno,
+                                    remarks: remarks
+                                },
+                                success: function (response, status) {
+
+                                    if (response == "-2") {
+                                        alert("Pallet not yet inserted");
+                                    } else if (response == "-1") {
+                                        alert("Database Error");
+                                    } else if (response == "0") {
+                                        alert("Succesfully Released Pallet");
+
+                                        $("#txtRemarks, #txtPalletNo, #txtPort").val("");
+                                        $("#lblPalletNo, #lblDatePacked, #lblProductSpecCode").html("");
+
+                                        $('#txtPalletBC').focus();
+
+
+                                    } else {
+                                        alert("Unknown Error");
+                                    }
+
+
+
+                                }
+                            })
+                        }
+                    }
+                })
+
+
+
+            }//end release pallet
+
+
+            //Change port
+            if (e.altKey == true && e.keyCode == 54) {
+                
+                //check account session                
+                 $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            var palletno = $("#lblPalletNo").html();
+                            var portcode = $("#txtPort").val();
+
+                            if (palletno.length > 0) {
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "coldstorage/ChangePalletPort",
+                                    data: {
+                                        palletno:palletno,
+                                        portcode:portcode
+                                    },
+                                    success: function(response,status) {
+
+                                        if (response == "-2") {
+                                            
+                                            alert("Invalid Port");
+                                            $("#txtPort").focus();
+                                            return;
+                                        }else if (response == "-1") {
+                                            alert("Database Error");
+                                            $("#txtPort").focus();
+                                            return;
+                                        }else if (response == "0") {
+                                            
+                                            $("#lblPalletNo, #lblDatePacked, #lblProductSpecCode").html("");
+                                            $("#txtRemarks, #txtPalletBC, #txtPort").val("");
+
+                                            $("#txtPalletBC").focus();
+
+                                        }else {
+                                            alert("Unknown Error");
+                                            $("#txtPort").focus();
+                                            return;
+                                        }
+
+
+                                    }
+                                })
+
+                            }else {
+                                alert("Error: Please scan a pallet");
+                                $("#txtPalletBC").focus();
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+            }//end change port
+
+
+
+            
+        })// end body keydown
+
+
+        $("#txtBayBarcode").bind('keydown',function(e) {
+            
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            //Start process
+                            var bayBarcode = $("#txtBayBarcode").val();
+                            var prefixBayBarcode = GetBarcodeType(bayBarcode);
+
+                            if (prefixBayBarcode == BID_CELL_BAY) {
+                                
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "coldstorage/GetColdStorageBay",
+                                    data: {
+                                        bayBarcode:bayBarcode
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            $("#txtBayId,#txtBayNo,#txtCellNo").val("");
+                                            $("#lblContent").html("");
+
+                                            alert("Bay not found!");
+                                            return;
+                                        }
+
+                                        var result = JSON.parse(response);
+                                        $("#txtBayId").val(result[0].BayID);
+                                        $("#txtBayNo").val(result[0].BayNo);
+                                        $("#lblContent").html(result[0].Content);
+                                        
+                                        var cellno = result[0].CellNo;
+                                        
+                                        $("#txtPalletBC").focus();
+
+                                        if (cellno.length > 0) {
+                                            $("#txtCellNo").val(result[0].CellNo);
+                                        }else {
+                                            alert("Bay already full");
+                                        }
+
+
+                                    }
+                                })
+
+                            }else {
+                                alert("Barcode Error!");
+                                return;
+                            }
+
+
+                        }
+                    }
+                })
+
+
+            }
+
+        })// end baybarcode keydown
+
+        $("#txtBayNo").bind('keydown', function (e) {
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                 $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            var bayno = $("#txtBayNo").val();
+                            if (bayno != "") {
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + 'coldstorage/GetColdStorageBayId',
+                                    data: { bayno: bayno },
+                                    success: function (response, status) {
+                                        if (response == "0") {
+                                            $("#lblContent").html("");
+                                            $("#txtBayId, #txtCellNo").val("");
+
+                                            alert("Bay not found!");
+                                            return;
+                                        }
+
+                                        $("#txtPalletBC").focus();
+                                        var result = JSON.parse(response);
+                                        var cellno = result[0].CellNo;
+
+                                        $("#lblContent").html(result[0].Content);
+                                        //Important value
+                                        $("#txtBayId").val(result[0].BayID);
+
+                                        if (cellno.length > 0 || cellno == "") {
+                                            $("#txtCellNo").val(result[0].CellNo);      
+                                        }else {
+                                            alert("Bay already full");
+                                            return;
+                                        }
+
+
+                                    }
+                                })
+                            }else {
+                                alert("Pls. Enter a Bay No");
+                                return;
+                            }
+                        }
+                    }
+                })
+
+
+            }
+        })// end bayno keydown
+
+
+        $("#txtPalletBC").bind('keydown', function (e) {
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            //Start Process
+                            var palletbc = $("#txtPalletBC").val();
+                            var prefixpalletbc = GetBarcodeType(palletbc);
+                        
+                            if (prefixpalletbc == BID_PALLET) {
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "coldstorage/GetPalletInfo",
+                                    data: { barcode: palletbc },
+                                    success: function (response, status) {
+                                        if (response == "0") {
+                                            alert("Pallet No. not found!");
+                                            return;
+                                        }
+
+                                        var result = JSON.parse(response);
+                                        var dateString = result[0].datetimepacked.substr(6);
+                                        var currentTime = new Date(parseInt(dateString));
+                                        var month = currentTime.getMonth() + 1;
+                                        var day = currentTime.getDate();
+                                        var year = currentTime.getFullYear();
+                                        var datepacked = month + "/" + day + "/" + year;
+
+
+                                        $("#lblPalletNo").html(result[0].palletno);
+                                        $("#lblProductSpecCode").html(result[0].productspeccode);
+                                        $("#lblDatePacked").html(datepacked);
+                                        $("#txtPort").val(result[0].portcode);
+
+
+                                        //Important value for form submit
+                                        $("#txtPalletNo").val(result[0].palletno);
+
+
+                                    }
+                                })
+                            } else {
+                                alert("Barcode Error!")
+                            }
+
+                        }
+                    }
+                })
+
+            }
+        })// end pallet barcode keydown
+
+
+
+        function GetBarcodeType(strBarcode) {
+            var retBarcode;
+
+            if (strBarcode.length == 16 || strBarcode.length == 10) {
+
+                retBarcode = strBarcode.substring(0,2);
+                retBarcode = Math.round(retBarcode);
+            
+            }else {
+                retBarcode = -1;
+            }
+
+            return retBarcode;
+
+        }
+
+    })
+
+</script>

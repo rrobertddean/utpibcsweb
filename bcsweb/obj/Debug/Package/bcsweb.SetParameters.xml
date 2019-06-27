@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<parameters>
+  <setParameter name="IIS Web Application Name" value="Default Web Site/bcsweb_deploy" />
+  <setParameter name="UPISRConnection-Web.config Connection String" value="Server=UNI-NPC-ITS018;Database=UPISR_ROB;User Id=sa;&#xD;&#xA;Password=sqladmin;" />
+</parameters>

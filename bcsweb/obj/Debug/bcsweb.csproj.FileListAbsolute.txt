@@ -1,0 +1,7 @@
+c:\users\rpantino\documents\visual studio 2010\Projects\bcsweb\bcsweb\bin\bcsweb.dll
+c:\users\rpantino\documents\visual studio 2010\Projects\bcsweb\bcsweb\bin\bcsweb.pdb
+c:\users\rpantino\documents\visual studio 2010\Projects\bcsweb\bcsweb\obj\Debug\bcsweb.csprojResolveAssemblyReference.cache
+c:\users\rpantino\documents\visual studio 2010\Projects\bcsweb\bcsweb\obj\Debug\bcsweb.dll
+c:\users\rpantino\documents\visual studio 2010\Projects\bcsweb\bcsweb\obj\Debug\bcsweb.pdb
+C:\Users\RPantino\documents\visual studio 2010\Projects\bcsweb\bcsweb\obj\Debug\Interop.MD5Enc.dll
+C:\Users\RPantino\documents\visual studio 2010\Projects\bcsweb\bcsweb\obj\Debug\bcsweb.csproj.ResolveComReference.cache

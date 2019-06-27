@@ -1,0 +1,442 @@
+﻿<table style="width: 100%">
+    <tr>
+        <td style="text-align: center;"><b>Loading - RV Material Loading</b></td>
+    </tr>
+    <tr>
+        <td>Reefer Van Barcode: <input type="text" id="txtRVBarcode" class="inputlayout" style="width:190px;" /></td>
+    </tr>   
+    <tr>
+        <td>Reefer Van ID: <input type="text" id="txtRVID" class="inputlayout" style="width:60px;" /></td>
+    </tr>
+    <tr>
+        <td>Reefer Van No: <label id="lblReeferVanNo"></label></td>
+    </tr>       
+    <tr>
+        <td>Material Barcode: <input type="text" class="inputlayout" style="width:190px;" id="txtMaterialBarcode" /></td>
+    </tr>
+    <tr>    
+        <td>Material ID: <input type="text" class="inputlayout" id="txtMaterialID" style="width:60px;" /> Qty: <input type="text" class="inputlayout" id="txtQty" style="width:50px;" /></td>
+    </tr>   
+    <tr>
+        <td>Material Name: <label id="lblMaterialName"></label></td>
+    </tr>
+
+    <tr>
+        <td>Remarks: <input type="text" id="txtRemarks" class="inputlayout" style="width:100px;" /></td>
+    </tr>
+
+    <tr>
+        <td>
+            <input type="hidden" id="txtShipmentID" value=@TempData["shipmentid"] />
+            <input type="hidden" id="txtPortID" value=@TempData["portid"] />
+            <input type="hidden" id="txtVesselID" value=@TempData["vesselid"] />
+        </td>
+    </tr>   
+
+
+
+    <tr>
+        <td style="padding-top:10px;">
+            <b> Press Alt+: 1-Save, 2-Clear Entry, 
+            <br /> 3-Back to Loading Menu,
+            <br /> 4-Logout
+            <br /> 5-Unload 
+            </b>
+        </td>
+    </tr>   
+
+    
+</table>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function() {
+
+        var baseUrl = getbaseUrl();
+        var BID_REEFER_VAN = 4;
+        var BID_MATERIALS = 7;
+
+        $("#txtRVBarcode").focus();
+
+        $("html").bind("keydown", function(e) {
+
+       
+            if (e.altKey == true && e.keyCode == 49) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+  
+                            var shipmentid = $("#txtShipmentID").val();
+                            var portid = $("#txtPortID").val();
+                            var vesselid = $("#txtVesselID").val();
+                            var reefervanid = $.trim($("#txtRVID").val());
+                            var materialid = $.trim($("#txtMaterialID").val());
+                            var qty = $.trim($("#txtQty").val());
+                            var remarks = $("#txtRemarks").val();
+
+                            if (reefervanid.length > 0 && materialid.length > 0) {
+
+                                if (qty.length > 0 && qty > 0) {
+                                    $.ajax({
+                                        type:"POST",
+                                        url: baseUrl + "loading/InsertLoadingMaterials",
+                                        data: {
+                                            materialid: materialid,
+                                            shipmentid: shipmentid,
+                                            portid: portid,
+                                            inreefervan: "Y",
+                                            hatchholdid: 0,
+                                            reefervan: reefervanid,
+                                            quantity: qty,
+                                            remarks: remarks
+                                        },
+                                        success: function(response,status) {
+                                            if (response == "-1") {
+                                                alert("Error occured");
+                                                return;
+                                            }else if (response == "-2") {
+                                                alert("Material already loaded");
+                                                return;
+                                            }else if (response == "-3") {
+                                                alert("Invalid Hatch");
+                                                return;
+
+                                            }else if (response == "-10") {
+                                                alert("Database Error");
+                                                return;
+                                            }else if (response == "0") {
+                                                alert("Material Loaded Succesfully");
+                                                $("#txtMaterialBarcode, #txtMaterialID, #txtQty, #txtRemarks").val("");
+                                                $("#lblMaterialName").html("");
+                                                $("#txtMaterialBarcode").focus();
+                                                return;
+                                            }else {
+                                                alert("Database Error");
+                                                return;
+                                            }
+                                        }
+                                    }) 
+                                }else {
+                                    alert("Invalid Box Qty Value");
+                                    return;
+                                }
+
+                            }else {
+                                alert("Invalid Entry");
+                                return;
+                            }
+
+                
+                        }
+                    }
+                })
+
+            }//End alt + 1 Save
+
+           
+            if (e.altKey == true && e.keyCode == 50) {
+
+                $("#txtMaterialBarcode, #txtMaterialID, #txtQty, #txtRemarks").val("");
+                $("#lblMaterialName").html("");
+                $("#txtMaterialBarcode").focus();
+
+            }//End alt + 2 Clear Entry
+
+      
+            if (e.altKey == true && e.keyCode == 51) {
+                window.location.href=baseUrl + "loading/LoadMaterials";
+            }//End alt + 3 Back to loading menu
+
+       
+            if (e.altKey == true && e.keyCode == 52) {
+
+
+            }//End alt + 4 Logout
+
+            if (e.altKey == true && e.keyCode == 53) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                         
+                            var shipmentid = $("#txtShipmentID").val();
+                            var portid = $("#txtPortID").val();
+                            var reefervanid = $.trim($("#txtRVID").val());
+                            var materialid = $.trim($("#txtMaterialID").val());
+
+                            if (reefervanid.length > 0  && materialid.length > 0 ) {
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/UnloadLoadingMaterial",
+                                    data: {
+                                        materialid: materialid,
+                                        shipmentid: shipmentid,
+                                        portid: portid,
+                                        inreefervan: "Y",
+                                        hatchid: 0,
+                                        reefervanid: reefervanid,
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "-1") {
+                                            alert("Error Occured");
+                                            return;
+                                        }else if (response == "-2") {
+                                            alert("Material not found");
+                                            return;
+                                        }else if (response == "-3") {
+                                            alert("Invalid Hatch");
+                                            return;
+                                        }else if (response == "-10") {
+                                            alert("Database Error");
+                                            return;
+                                        }else if (response == "0") {
+                                            alert("Material Unloaded Succesfully");
+                                            $("#txtMaterialBarcode, #txtMaterialID, #txtQty, #txtRemarks").val("");
+                                            $("#lblMaterialName").html("");
+                                            $("#txtMaterialBarcode").focus();
+                                            return;
+                                        }else {
+                                            alert("Database Error");        
+                                            return;
+                                        }
+                                    }
+                                })
+
+
+                            }else {
+
+                            }
+
+                        }
+                    }
+                })
+
+
+            }//End alt + 5 Unload
+
+
+
+        })
+
+
+        $("#txtRVBarcode").bind("keydown", function(e){
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var rvbarcode = $.trim($("#txtRVBarcode").val());
+                            var prefixrvbarcode = GetBarcodeType(rvbarcode);
+
+                            if (prefixrvbarcode == BID_REEFER_VAN) {
+                                
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/DisplayReeferVanLoadingData",
+                                    data: {
+                                        rvbarcode:rvbarcode
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            alert("Invalid Reefer Van ID!");
+                                            $("#txtRVID").val("");
+                                            $("#lblReeferVanNo").html("");
+                                            return;
+                                        }
+
+                                        var result = JSON.parse(response);
+                                        $("#txtRVID").val(result[0].ReeferVanID);
+                                        $("#lblReeferVanNo").html(result[0].ReeferVanNo);
+                                        $("#txtMaterialBarcode").focus();
+
+                                    }
+                                })
+
+                            }else {
+                                alert("Barcode Error!");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+
+            }//end alt + enter
+
+        })//end rvbarcode bind keydown
+
+        $("#txtRVID").bind("keydown", function(e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var rvid = $.trim($("#txtRVID").val());
+
+                            if (rvid.length > 0 && rvid > 0) {
+                                $.ajax({
+                                    type:"POST",
+                                    url: baseUrl + "loading/DisplayReeferVanLoadingDataByRVID",
+                                    data: {
+                                        rvid: rvid
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            alert("Invalid Reefer Van ID!");
+                                            $("#txtRVID").val("");
+                                            $("#lblReeferVanNo").html("");
+                                            return;
+                                        }
+
+                                        var result = JSON.parse(response);
+                                        $("#txtRVID").val(result[0].ReeferVanID);
+                                        $("#lblReeferVanNo").html(result[0].ReeferVanNo);
+
+                                        $("#txtMaterialBarcode").focus();
+                                    }
+                                })
+                            }else {
+                                alert("Pls. enter a Reefer Van ID!");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+
+            }//end alt + enter
+
+        })//end rvid bind keydown
+
+        $("#txtMaterialBarcode").bind("keydown", function(e){
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var materialbarcode = $.trim($("#txtMaterialBarcode").val());
+                            var prefixmaterialbc = GetBarcodeType(materialbarcode);
+
+                            if (prefixmaterialbc == BID_MATERIALS) {
+                                
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/DisplayMaterialsData",
+                                    data: {
+                                        materialbarcode:materialbarcode
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            alert("Invalid Materials ID!");
+                                            $("#txtMaterialID").val("");
+                                            $("#lblMaterialName").html("");
+
+                                            return;
+                                        }
+                                        var result = JSON.parse(response);
+                                        $("#txtMaterialID").val(result[0].MaterialID);
+                                        $("#lblMaterialName").html(result[0].MatName);
+
+                                        $("#txtQty").focus();
+                                    }
+                                })
+
+
+                            }else {
+                                $("#txtMaterialID").val("");
+                                $("#lblMaterialName").html("");
+
+                                alert("Barcode Error!");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+            }//end alt + enter
+
+        })//end materialbarcode bind keydown
+
+        $("#txtMaterialID").bind("keydown", function(e){
+
+            if (e.altKey == true && e.keyCode == 13) {
+                $("#txtQty").focus();   
+            }
+
+            
+        })//end material id bind keydown
+
+        $("#txtQty, #txtRemarks").bind("keydown", function(e){
+
+            if (e.altKey == true && e.keyCode == 13) {
+                $("#txtRemarks").focus();
+            }
+
+            
+        })//end qty,remarks bind keydown
+
+
+    })
+
+    function GetBarcodeType(strBarcode) {
+        var retBarcode;
+
+        if (strBarcode.length == 16 || strBarcode.length == 10) {
+            retBarcode = strBarcode.substring(0,2);
+            retBarcode = Math.round(retBarcode);
+        }else {
+            retBarcode = -1;
+        }
+
+        return retBarcode;
+
+    }
+
+</script>

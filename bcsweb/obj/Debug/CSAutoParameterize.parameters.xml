@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<parameters>
+  <parameter name="UPISRConnection-Web.config Connection String" description="UPISRConnection Connection String used in web.config by the application to access the database." defaultvalue="Server=UNI-NPC-ITS018;Database=UPISR_ROB;User Id=sa;&#xD;&#xA;Password=sqladmin;" tags="SqlConnectionString">
+    <parameterEntry kind="XmlFile" scope="obj\\Debug\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='UPISRConnection']/@connectionString" />
+  </parameter>
+</parameters>

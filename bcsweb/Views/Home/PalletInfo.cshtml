@@ -1,0 +1,27 @@
+﻿@{ViewBag.Title = "Index"; }
+
+<table style="font-size:60%;">
+    @foreach (var item in Model.PalletInfo)
+    {
+        <tr>
+            <td>Status: </td>
+            <td>@item.status</td>
+        </tr>
+        <tr>
+            <td>Pallet No: </td>
+            <td>@item.palletno</td>
+        </tr>
+        <tr>
+            <td>No of boxes: </td>
+            <td>@item.noofboxes</td>
+        </tr>
+        <tr>
+            <td>Product Spec Code: </td>
+            <td>@item.productspeccode</td>
+        </tr>
+        <tr>
+            <td>Date Time Packed: </td>
+            <td>@item.datetimepacked</td>
+        </tr>
+    }
+</table>

@@ -1,0 +1,400 @@
+﻿<table style="width: 100%">
+    <tr>
+        <td style="text-align: center;"><b>Loading-Whole Reefer Van</b></td>
+    </tr>
+
+    <tr>
+        <td>
+            <label>Shipmnt Cd:</label> <input type="text" id="txtShipmentCode" class="inputlayout" style="width: 60px;" />
+            <label>Port:</label><input type="text" id="txtPort" class="inputlayout" style="width:60px;" />
+        </td>
+    </tr>
+
+    <tr>
+        <td><label id="lblVesselVoyage" class="yellow"></label></td>
+    </tr>
+
+
+    <tr>
+        <td>Reefer Van Barcode: <input type="text" id="txtReeferVanBarcode" style="width:190px;" class="inputlayout" /></td>
+    </tr>
+
+    <tr>
+        <td>Van No: <input type="text" id="txtReeferVanNo" class="inputlayout" style="width: 140px;" /></td>
+    </tr>
+
+    <tr>
+        <td>Reefer Van: <label id="lblReeferVan"></label></td>
+    </tr>
+
+    <tr>
+        <td><span style="width:70px;display:inline-block;">Content:</span> <label id="lblContent"></label></td>
+    </tr>
+
+    <tr>
+        <td><span style="width:70px;display:inline-block;"></span> <label id="lblNoOfBoxes"></label></td>
+    </tr>   
+
+    <tr style="display:inline-block;margin-top:15px;">
+        <td>Last Stuffed: <label id="lblLastStuffed"></label></td>  
+    </tr>
+
+    <tr>
+        <td>
+            <input type="hidden" id="txtVesselId" />
+            <input type="hidden" id="txtPortId" />
+            <input type="hidden" id="txtRVID" />
+        </td>
+    </tr>
+    
+    <tr style="display:inline-block;margin-top:15px;">
+        <td>
+            <b>
+            Press Alt+: 1-Save, 2-Clear Entry, <br />
+            3-Back to Loading Menu,<br />
+            4-Logout
+            </b>
+        </td>
+    </tr>
+
+
+</table>
+
+
+<script type="text/javascript">
+    var baseUrl = getbaseUrl();
+    var BID_REEFER_VAN = 4;
+
+    $(document).ready(function() {
+        $("#txtShipmentCode").focus();
+
+        $("html").bind("keydown", function(e) {
+
+            //Press alt + 1 Save
+            if (e.altKey == true && e.keyCode == 49) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var rvid = $("#txtRVID").val();
+                            var shipmentcode = $("#txtShipmentCode").val();
+                            var portid = $("#txtPortId").val();
+
+                            if (rvid.length > 0 || rvid > 0) {
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/InsertWholeReeferVanForLoading",
+                                    data: {
+                                        shipmentid: shipmentcode,
+                                        portid: portid,
+                                        rvid: rvid
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "1") {
+                                            $("#txtReeferVanBarcode, #txtReeferVanNo, #txtRVID").val("");
+                                            $("#lblReeferVan, #lblContent, #lblNoOfBoxes, #lblLastStuffed").html("");
+
+                                            alert("Whole Reefervan Loaded Succesfully");
+                                        }else {
+                                            alert("Error: Invalid Entry");
+                                        }
+                                    }
+                                })
+                                
+
+                            }else {
+                                alert("Invalid Entry!");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+            }// end alt + 1 Save
+
+            //Press alt + 2 Clear Entry
+            if (e.altKey == true && e.keyCode == 50) {
+                $("#txtReeferVanBarcode, #txtReeferVanNo, #txtRVID").val("");
+                $("#lblReeferVan, #lblContent, #lblNoOfBoxes, #lblLastStuffed").html("");
+
+            }// end alt + 2 Clear Entry
+
+            //Press alt + 3 Back to loading menu
+            if (e.altKey == true && e.keyCode == 51) {
+                window.location.href = baseUrl + "loading/LoadPallets";
+            }// end alt + 3 Back to loading menu
+
+            //Press alt + 4 logout
+            if (e.altKey == true && e.keycode == 52) {
+                
+            }//end alt + 4 logout
+
+
+        })
+
+        $("#txtShipmentCode").bind("keydown", function(e) {
+            if (e.altKey == true && e.keyCode == 13) {
+                $("#txtPort").focus();
+            }
+        })//end shipment code bind keydown
+
+        $("#txtPort").bind("keydown", function(e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var shipmentcode = $.trim($("#txtShipmentCode").val());
+                            var portcode = $.trim($("#txtPort").val());
+
+                            if (shipmentcode.length <= 0 || portcode.length <= 0) {
+                                alert("Invalid Shipment Code and Port");
+                                return;
+                            }
+
+                            $.ajax({
+                                type: "POST",
+                                url: baseUrl + "loading/GetShipmentRouteByCode",
+                                data: {
+                                    shipmentcode: shipmentcode,
+                                    port: portcode
+                                },
+                                success: function(response,status) {
+                                    if (response == "0") {
+                                        $("#txtVesselId, #txtPortId, #txtReeferVanBarcode").val("");
+                                        $("#lblVesselVoyage").html("");
+
+                                        alert("Invalid Shipment Route!");   
+                                        return;
+                                    }
+                                    var result = JSON.parse(response);
+                                    $("#lblVesselVoyage").html(result[0].VesselName + " " + result[0].VoyageNo);
+                                    $("#txtVesselId").val(result[0].VesselID);
+                                    $("#txtPortId").val(result[0].PortID);
+
+                                    $("#txtReeferVanBarcode").focus();
+
+
+
+                                }
+                            })
+
+                        }
+                    }
+                })
+            }//end alt + enter
+
+        })// end port bind keydown
+
+        $("#txtReeferVanBarcode").bind("keydown", function(e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var rvbarcode = $.trim($("#txtReeferVanBarcode").val());
+                            
+                            if (rvbarcode.length <=0) {
+                                $("#txtReeferVanBarcode").focus();
+                                return;
+                            }
+
+                            var prefixRVBarcode = GetBarcodeType(rvbarcode);
+                            if (prefixRVBarcode == BID_REEFER_VAN) {
+                                
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/DisplayWholeReeferVanData",
+                                    data: {
+                                        rvbarcode: rvbarcode
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            $("#txtRVID").val("");
+                                            $("#lblReeferVan, #lblContent, #lblNoOfBoxes, #lblLastStuffed").html("");
+
+                                            alert("Invalid Reefer Van");
+                                            return;                                
+                                        }
+
+                                        var result = JSON.parse(response);
+                                        $("#txtRVID").val(result[0].ReeferVanID);
+                                        $("#lblReeferVan").html(result[0].ReeferVanNo);
+                                        $("#lblContent").html(result[0].NoOfPallet + " pallets");
+                                        $("#lblNoOfBoxes").html(result[0].NoOfBoxes + " boxes");
+
+                                        var dateString = result[0].LastStuffedDate.substr(6);    
+                                        var currentTime = new Date(parseInt(dateString));
+                                        var month = currentTime.getMonth() + 1;
+                                        var day = currentTime.getDate();
+                                        var year = currentTime.getFullYear();
+                                        var hour = currentTime.getHours();
+                                        var minutes = currentTime.getMinutes();
+
+                                        var datepacked = month + "/" + day + "/" + year + " " + hour + ":" + minutes;
+
+                                        $("#lblLastStuffed").html(datepacked);
+
+                                    }
+                                })
+
+                            }else {
+                                $("#txtRVID").val("");
+                                $("#lblReeferVan, #lblContent, #lblNoOfBoxes, #lblLastStuffed").html("");
+
+                                alert("Barcode Error");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+                
+                
+            }//end alt + enter
+
+        })// end reefer van barcode bind keydown
+
+        $("#txtReeferVanNo").bind("keydown", function(e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+
+                            var rvno = $("#txtReeferVanNo").val();
+                            var shipmentcode = $("#txtShipmentCode").val();
+
+                            //Display Reefer van ID
+                            $.ajax({
+                                type:"POST",
+                                url: baseUrl + "loading/DisplayReeferVanId",
+                                data: {
+                                    rvno: rvno,
+                                    isloading: "false"
+                                },
+                                success: function(response,status) {
+                                    if (response == "0") {
+                                        $("#txtRVID").val("");
+                                        $("#lblReeferVan, #lblContent, #lblNoOfBoxes, #lblLastStuffed").html("");
+
+                                        alert("Invalid Reefer Van No!");
+                                        return;
+                                    }
+
+                                    var result = JSON.parse(response);  
+                                    $("#txtRVID").val(result[0].ReeferVanID);
+
+                                    $("#txtReeferVanBarcode").focus();
+
+                                    var dummyPrefix = "999999";
+                                    var rvid = $("#txtRVID").val();
+                                    var rvbarcode = dummyPrefix + rvid;
+                                    
+                                    //Display Whole Reefer Van Data
+                                    $.ajax({
+                                        type: "POST",
+                                        url : baseUrl + "loading/DisplayWholeReeferVanData",
+                                        data: {
+                                            rvbarcode: rvbarcode
+                                        },
+                                        success: function(response, status) {
+                                            if (response == "0") {
+                                                $("#txtRVID").val("");
+                                                $("#lblReeferVan, #lblContent, #lblNoOfBoxes, #lblLastStuffed").html("");
+
+                                                alert("Invalid Reefer Van");
+                                                return;                                
+                                            }
+
+                                            var result = JSON.parse(response);
+                                            $("#txtRVID").val(result[0].ReeferVanID);
+                                            $("#lblReeferVan").html(result[0].ReeferVanNo);
+                                            $("#lblContent").html(result[0].NoOfPallet + " pallets");
+                                            $("#lblNoOfBoxes").html(result[0].NoOfBoxes + " boxes");
+
+                                            var dateString = result[0].LastStuffedDate.substr(6);    
+                                            var currentTime = new Date(parseInt(dateString));
+                                            var month = currentTime.getMonth() + 1;
+                                            var day = currentTime.getDate();
+                                            var year = currentTime.getFullYear();
+                                            var hour = currentTime.getHours();
+                                            var minutes = currentTime.getMinutes();
+
+                                            var datepacked = month + "/" + day + "/" + year + " " + hour + ":" + minutes;
+
+                                            $("#lblLastStuffed").html(datepacked);
+                                                
+
+                                        }
+                                    })
+
+                                }
+                            })
+
+                                            
+                        }
+                    }
+                })
+
+            }//end alt + enter
+
+        })// end reefervanno bind keydown
+
+
+        
+    })
+
+
+    function GetBarcodeType(strBarcode) {
+        var retBarcode;
+
+        if (strBarcode.length == 16 || strBarcode.length == 10) {
+
+            retBarcode = strBarcode.substring(0,2);
+            retBarcode = Math.round(retBarcode);
+        
+        }else {
+            retBarcode = -1;
+        }
+
+        return retBarcode;
+
+    }
+</script>

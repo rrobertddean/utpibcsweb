@@ -1,0 +1,69 @@
+﻿<table style="width: 100%">
+    <tr>
+        <td><b>Loading</b></td>
+    </tr>
+
+    <tr style="width: 100%;height:3em;">
+        <td>
+            <button style="width:100%;height:3em;" id="">1- Load Pallets</button>
+        </td>
+    </tr>
+    
+    <tr style="width: 100%;height:3em;">
+        <td>
+            <button style="width:100%;height:3em;" id="">2- Set Loading Time</button>
+        </td>
+    </tr>
+
+    <tr style="width: 100%;height:3em;">
+        <td>
+            <button style="width:100%;height:3em;" id="">3- Load Materials</button>
+        </td>
+    </tr>
+
+    <tr>
+        <td><b>Press: </b></td>
+    </tr>
+
+    <tr>
+        <td>1 - Load Pallets</td>
+    </tr>
+
+    <tr>
+        <td>2 - Set Loading Time</td>
+    </tr>
+
+    <tr>
+        <td>3 - Load Material</td>
+    </tr>
+
+    <tr>
+        <td>4 - Return</td>
+    </tr>
+
+
+</table>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var baseUrl = getbaseUrl();
+
+        $('html').focus();
+
+        $('html').bind('keypress', function (e) {
+            if (e.keyCode == 49) {
+                window.location.href = baseUrl + "loading/LoadPallets";
+            } else if (e.keyCode == 50) {
+                window.location.href = baseUrl  + "loading/SetLoadingTime";
+            } else if (e.keyCode == 51) {
+                window.location.href = baseUrl + "loading/LoadMaterials";
+            } else if (e.keyCode == 52) {
+                window.location.href = baseUrl;
+            }
+
+
+        })
+
+
+    })
+</script>

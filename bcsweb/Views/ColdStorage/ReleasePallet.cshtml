@@ -1,0 +1,241 @@
+﻿<table style="width:100%;">
+    <tr>
+        <td style="text-align: center;"><b>Cold Storage - Release Pallet</b></td>
+    </tr>
+    <tr>
+        <td>Barcode: <input type="text" id="txtBarcode" class="inputlayout" style="width:140px;" /></td>
+    </tr>
+    <tr>
+        <td>Pallet No: <label id="lblPalletNo"></label></td>
+    </tr>
+
+    <tr>
+        <td>Qty: <label id="lblQty"></label></td>
+    </tr>
+
+    <tr>
+        <td>Date Packed: <label id="lblDatePacked"></label></td>
+    </tr>
+
+    <tr>
+        <td>Storage Type: <label id="lblStorageType"></label></td>
+    </tr>
+
+    <tr>
+        <td>Date Scanned: <label id="lblDateScanned"></label></td>
+    </tr>
+
+    <tr>
+        <td>Reason: <input type="text" id="txtReason" class="inputlayout" style="width:120px;" /> </td>
+    </tr>
+
+    <tr>
+        <td >
+            <input type="hidden" id="txtPalletNoClean" />
+        </td>
+    </tr>
+
+    <tr>
+        <td >
+            Press Alt+: 1 - Save,
+            <br />2 - Clear Entry,
+            <br />3 - Back to Cold Storage Menu, 
+            <br />4 - Log Out
+        </td>
+    </tr>
+
+
+</table>
+
+<script type="text/javascript">
+
+    var baseUrl = getbaseUrl();
+
+    $(document).ready(function () {
+        var BID_PALLET = 1;
+
+        $("#txtBarcode").focus();
+
+        $('html').bind('keydown', function (e) {
+
+            //Save
+            if (e.altKey == true && e.keyCode == 49) {
+
+                //Check account session
+                 $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data) {
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+
+                            var palletno = $.trim($("#txtPalletNoClean").val());
+                            var prefixpalletno = GetBarcodeType($("#txtBarcode").val());
+
+                            if (prefixpalletno == BID_PALLET) {
+                            
+                                var reason = $("#txtReason").val();
+
+                                //Release from coldstorage
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "coldstorage/ReleaseFromColdStorage",
+                                    data: {
+                                        palletno: palletno,
+                                        remarks: reason
+                                    },
+                                    success: function (response, status) {
+                                        if (response == "-2") {
+                                            alert("Pallet Not Yet Inserted!");
+                                            $("#txtBarcode, #txtReason, #txtPalletNoClean").val("");
+                                            $("#lblPalletNo, #lblQty, #lblDatePacked, #lblStorageType, #lblStorageType").html("");
+                                            $("#txtBarcode").focus();
+
+                                            return false;
+                                            
+                                        } else if (response == "-1") {
+                                            alert("Database Error!");
+                                            return false;
+                                        } else if (response == "0") {
+                                            alert("Succesfull");
+                                            window.location.href = baseUrl + 'coldstorage/ReleasePallet';
+                                            return false;
+                                        } else {
+                                            alert("Unkown Error");
+                                        }
+
+                                    }
+                                })
+
+
+                            }else {
+                                alert("Barcode Error!");
+                                return;
+                            }
+                        }
+                    }
+                })
+         
+            }
+
+            //Reset
+            if (e.altKey == true && e.keyCode == 50) {
+                window.location.href = baseUrl + 'coldstorage/ReleasePallet';
+            }
+
+            //Return to menu
+            if (e.altKey == true && e.keyCode == 51) {
+                window.location.href = baseUrl + 'home/coldstorage';
+            }
+        })
+
+
+        $('#txtBarcode').bind('keydown', function (e) {
+
+            //Barcode on Enter
+            if (e.altKey == true && e.keyCode == 13) {
+                var barcode = $.trim($("#txtBarcode").val());
+
+                 var prefixpalletno = GetBarcodeType(barcode);
+
+                if (prefixpalletno == BID_PALLET) {
+
+                    
+                    $.ajax({
+                        type: "POST",
+                        url: baseUrl + "coldstorage/GetStorageInfoById",
+                        data: { barcode: barcode },
+                        success: function (response, status) {
+
+                            if (response == "0") {
+                                alert("Pallet Not Yet Inserted!");
+                                return false;
+                            }
+
+                            var result = JSON.parse(response);
+                            var dateString = result[0].ActualTimeIn.substr(6);
+                            var currentTime = new Date(parseInt(dateString));
+                            var month = currentTime.getMonth() + 1;
+                            var day = currentTime.getDate();
+                            var year = currentTime.getFullYear();
+                            var datescanned = month + "/" + day + "/" + year;
+
+
+                            $("#txtPalletNoClean").val(result[0].PalletNo);
+                            $("#lblPalletNo").html(result[0].PalletNo);
+                            $("#lblDateScanned").html(datescanned);
+                            $("#txtReason").val(result[0].Reason);
+                            $("#lblStorageType").html(result[0].CellCategory);
+
+
+
+                            //Get Pallet Receiving Detail
+                            var palletno = result[0].PalletNo;
+                            $.ajax({
+                                type: "POST",
+                                url: baseUrl + "coldstorage/GetPalletReceivingDetails",
+                                data: { palletno: palletno },
+                                success: function (response, status) {
+
+
+                                    if (response == "0") {
+                                        alert("Pallet not found!");
+                                        return false;
+                                    }
+
+                                    var result = JSON.parse(response);
+                                    var dateString = result[0].DateTimePacked.substr(6);
+                                    var currentTime = new Date(parseInt(dateString));
+                                    var month = currentTime.getMonth() + 1;
+                                    var day = currentTime.getDate();
+                                    var year = currentTime.getFullYear();
+                                    var datetimepacked = month + "/" + day + "/" + year;
+
+                                    $("#lblDatePacked").html(datetimepacked);
+
+                                }
+                            })
+
+                        }
+
+
+
+                    })
+                }else {
+                    alert("Barcode Error!");
+                    return;
+                }
+
+             
+
+                
+
+
+            }
+        })//end barcode keydown
+
+
+
+        function GetBarcodeType(strBarcode) {
+            var retBarcode;
+
+            if (strBarcode.length == 16 || strBarcode.length == 10) {
+
+                retBarcode = strBarcode.substring(0,2);
+                retBarcode = Math.round(retBarcode);
+            
+            }else {
+                retBarcode = -1;
+            }
+
+            return retBarcode;
+
+        }
+
+
+    })
+
+</script>

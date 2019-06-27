@@ -1,0 +1,214 @@
+﻿<table style="width: 100%">
+    <tr>
+        <td style="text-align: center;"><b>Loading - Materials Menu</b></td>
+    </tr>
+
+    <tr>
+        <td>Shipment Code: <input type="text" id="txtShipmentCode" style="width: 100px" class="inputlayout" /></td>
+    </tr>   
+
+    <tr>
+        <td>Port Code: <input type="text" id="txtPortCode" class="inputlayout" style="width:100px;" /> </td>
+    </tr>
+
+    <tr>
+        <td style="padding-top:20px;">1 - Hatch Mat'ls Loading</td>    
+    </tr>
+
+    <tr>
+        <td>2 - Reefer Van Mat'ls Loading</td>
+    </tr>
+
+    <tr>
+        <td style="padding-top:10px;">Option: <input type="text" id="txtOption" class="inputlayout" style="width:50px;"/></td>
+    </tr>
+
+    <tr>
+        <td style="padding-top:10px;">
+            <b> Press Alt+: 1-Continue, 2-Clear Entry, <br />
+            3-Back to Loading Menu,<br />
+            4-Logout</b>
+        </td>
+    </tr>
+
+</table>
+
+<script type="text/javascript">
+
+
+    $(document).ready(function(){
+
+        var baseUrl = getbaseUrl();
+
+        $("#txtShipmentCode").focus();
+
+        $("html").bind("keydown", function(e){
+            
+            if (e.altKey == true && e.keyCode == 49) {
+
+                //check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var shipmentcode = $.trim($("#txtShipmentCode").val());
+                            var port = $("#txtPortCode").val();
+                            var option = $("#txtOption").val();
+
+                            if (option != "1" && option != "2") {
+                                alert("Error: Invalid Option");
+                                return
+                            }
+
+                            if (shipmentcode.length > 0 && port.length > 0) {
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/GetShipmentRouteByCode",
+                                    data: {
+                                        shipmentcode: shipmentcode,
+                                        port: port
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            alert("Invalid Shipment Route!");
+                                            return;
+                                        }
+                                        var result = JSON.parse(response);
+                                        var shipmentid = result[0].ShipmentID;
+                                        var portid = result[0].PortID;
+                                        var vesselid = result[0].VesselID;
+                                        
+                                        if (option == "1") {
+                                            window.location.href = baseUrl + "loading/HatchMaterialsLoading?shipmentid="+shipmentid+"&portid="+portid+"&vesselid="+vesselid;
+                                        }else if (option == "2") {
+                                            window.location.href = baseUrl + "loading/ReeferVanMaterialsLoading?shipmentid="+shipmentid+"&portid="+portid+"&vesselid="+vesselid;
+                                        }
+
+
+                                    }
+                                })
+
+                            }else {
+                                alert("Invalid Shipment Code and Port");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+            }//end alt + 1 continue
+
+            if (e.altKey == true && e.keyCode == 50) {
+                
+                $("#txtShipmentCode, #txtPortCode, #txtOption").val("");
+                $("#txtShipmentCode").focus();
+
+            }//end alt + 2 clear entry
+
+            if (e.altKey == true && e.keyCode == 51) {
+
+                window.location.href = baseUrl + "home/loading";
+
+            }//end alt + 3 back to loading menu
+
+            if (e.altKey == true && e.keyCode == 52) {
+
+            }//end alt + 4 logout
+
+        })//end html bind keydown
+
+        $("#txtShipmentCode").bind("keydown",function(e){
+            if (e.altKey == true && e.keyCode == 13) {
+                $("#txtPortCode").focus();   
+            }
+        })//end shipmentcode bind keydown
+
+        $("#txtPortCode").bind("keydown", function(e) {
+            if (e.altKey == true && e.keyCode == 13) {
+                $("#txtOption").focus();
+            }
+        })//end portcode bind keydown
+
+        $("#txtOption").bind("keydown",function(e) {
+
+            if (e.altKey == true && e.keyCode == 13) {
+
+                //Check account session
+                $.ajax({
+                    type:"POST",
+                    url: baseUrl + "account/checkSession",
+                    data: {},
+                    success: function(data){
+                        if (data.sessionValue==false)  {  
+                            location.href= baseUrl + "Account/Login";
+                            return;
+                        } else {
+                            
+                            var shipmentcode = $.trim($("#txtShipmentCode").val());
+                            var port = $("#txtPortCode").val();
+                            var option = $("#txtOption").val();
+
+                            if (option != "1" && option != "2") {
+                                alert("Error: Invalid Option");
+                                return
+                            }
+
+
+                            if (shipmentcode.length > 0 && port.length > 0) {
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: baseUrl + "loading/GetShipmentRouteByCode",
+                                    data: {
+                                        shipmentcode: shipmentcode,
+                                        port: port
+                                    },
+                                    success: function(response,status) {
+                                        if (response == "0") {
+                                            alert("Invalid Shipment Route!");
+                                            return;
+                                        }
+                                        var result = JSON.parse(response);
+                                        var shipmentid = result[0].ShipmentID;
+                                        var portid = result[0].PortID;
+                                        var vesselid = result[0].VesselID;
+                                        
+                                        if (option == "1") {
+                                            window.location.href = baseUrl + "loading/HatchMaterialsLoading?shipmentid="+shipmentid+"&portid="+portid+"&vesselid="+vesselid;
+                                        }else if (option == "2") {
+                                            window.location.href = baseUrl + "loading/ReeferVanMaterialsLoading?shipmentid="+shipmentid+"&portid="+portid+"&vesselid="+vesselid;
+                                        }
+
+
+                                    }
+                                })
+
+
+                            }else {
+                                alert("Invalid Shipment Code and Port");
+                                return;
+                            }
+
+                        }
+                    }
+                })
+
+
+            }//end alt + enter
+
+        })//end option bind keydown
+
+
+
+    })
+
+
+</script>

@@ -1,0 +1,61 @@
+﻿<table>
+    <tr>
+        <td></td>
+    </tr>
+</table>
+
+
+<form action="@Url.Action("Submitcode", "home")" method="post" id="submitCodeForm">
+<table>
+    <tr>
+        <td>Code: </td>
+        <td>
+             <input style="height:0;width:0;padding:0;border:none" type="text" id="txtCode" />
+            <input type="text" id="txtCodeTwo" name="code" />
+        </td>
+        <td>
+            <input type="hidden" name="action" value="submitcode"/>
+            @*<input type="submit" value="Submit" />*@
+           @* <button type="submit" name="submit">...</button>*@
+        </td>
+    </tr>
+    
+    <tr>
+        <td></td>
+        <td></td>
+    </tr>
+ 
+</table>
+</form>
+
+<script type="text/javascript">
+    window.onload = function () {
+        document.getElementById("txtCode").focus();
+    }
+
+    var typingTimer;
+    var doneTypingInterval = 500;
+    var $input = $("#txtCode");
+
+    //on keyup, start the countdown
+    $input.live('keyup', function () {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(doneTyping, doneTypingInterval);
+    });
+
+    //on keydown, clear the countdown 
+    $input.live('keydown', function () {
+        clearTimeout(typingTimer);
+    });
+
+    function doneTyping() {
+        var code = document.getElementById("txtCode").value;
+        code = code.replace(/^\s+|\s+$/g, "")
+        $("#txtCodeTwo").val(code);
+
+        document.forms["submitCodeForm"].submit();
+    }
+
+
+
+</script>

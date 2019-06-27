@@ -1,0 +1,60 @@
+﻿<table style="width:100%;">
+    
+    <tr>
+        <td><b>Main Menu</b></td>
+    </tr>
+
+    <tr style="width:100%;height:3em;">
+        <td>
+            <button style="width:100%;height:3em;" id="btncoldstorage">Cold Storage</button>
+        </td>
+    </tr>
+    <tr style="width:100%;height:3em;">
+        <td>
+            <button style="width:100%;height:3em;" id="btnloading">Loading</button>
+        </td>
+    </tr>
+
+    <tr>
+        <td><b>Press: </b></td>
+    </tr>
+
+    <tr>
+        <td><b>1 - Cold Storage</b></td>
+    </tr>
+
+    <tr>
+        <td><b>2 - Loading</b></td>
+    </tr>
+</table>
+
+
+<script type="text/javascript">
+
+    var baseUrl = getbaseUrl();
+
+    $(document).ready(function () {
+        $('html').focus();
+
+        $('html').bind('keypress', function (e) {
+            if (e.keyCode == 49) {
+                window.location.href = baseUrl + "home/coldstorage";
+            }
+            if (e.keyCode == 50) {
+                window.location.href = baseUrl + "home/loading";
+            }
+
+        })
+
+        $("#btncoldstorage").click(function () {
+            window.location.href = baseUrl + "home/coldstorage";
+        })
+
+        $("#btnloading").click(function () {
+            window.location.href = baseUrl + "home/loading";
+        })
+
+
+    })
+</script>
+

@@ -1,0 +1,90 @@
+﻿<table style="width: 100%">
+    
+    <tr>
+        <td><b>Loading - Pallet</b></td>
+    </tr>
+
+    <tr style="width:100%;height:3em;">
+        <td>
+            <button style="width:100%;height:3em;" id="btnHatchLoadingPalletized">1 - Hatch Loading (Palletized)</button>
+        </td>
+    </tr>
+
+    <tr style="width:100%;height:3em;">
+        <td>
+            <button style="width:100%;height:3em;" id="btnHatchLoadingBreakbulk">2 - Hatch Loading (Breakbulk)</button>
+        </td>
+    </tr>
+
+    <tr style="width:100%;height:3em;">
+        <td>
+            <button style="width:100%;height:3em;" id="btnReeferVan">3 - Reefer Van</button>
+        </td>
+    </tr>
+
+    <tr style="width:100%;height:3em;">
+        <td>
+            <button style="width:100%;height:3em;" id="btnLoadWholeReeferVan">4 - Load Whole Reefer Van</button>
+        </td>
+    </tr>
+
+    <tr>
+        <td><b>Press: </b></td>
+    </tr>
+
+    <tr>
+        <td>1 - Hatch Loading (Palletized)</td>
+    </tr>
+
+    <tr>
+        <td>2 - Hatch Loading (Breakbulk)</td>
+    </tr>
+
+    <tr>
+        <td>3 - Reefer Van</td>
+    </tr>
+
+    <tr>
+        <td>4 - Load Whole Reefer Van</td>
+    </tr>
+
+    <tr>
+        <td>5 - Return</td>
+    </tr>
+
+
+</table>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        var baseUrl = getbaseUrl();
+
+        $('html').focus();
+
+        $('html').bind('keypress', function (e) {
+            //Loading Hatch Palletized 
+            if (e.keyCode == 49) {
+                window.location.href = baseUrl + "loading/HatchLoadingPalletized";
+            }
+            //Loading Hatch Breakbulk
+            else if (e.keyCode == 50) {
+                window.location.href = baseUrl + "loading/HatchLoadingBreakBulk";
+            } 
+            //Loading Reefer Van
+            else if (e.keyCode == 51) {
+                window.location.href = baseUrl + "loading/Reefervan";
+            } 
+            //Loading Whole Reefer Van
+            else if (e.keyCode == 52) {
+                window.location.href = baseUrl + "loading/LoadWholeReeferVan";
+            } else if (e.keyCode == 53) {
+                window.location.href = baseUrl + "home/loading";
+            }
+
+        })
+    })
+
+
+</script>
